@@ -49,39 +49,21 @@ const checkoutTotal = document.querySelector("#checkout-total");
 const checkoutDeliveryPrice = document.querySelector("#checkout-delivery-price");
 const checkoutTotalPrice = document.querySelector("#checkout-total-price");
 const deliveryPrices = { kuryr: 129, osobne: 0 };
+const TERMS_VERSION = "v3.0";
 
 // Web3Forms Access Key ziskas zdarma na https://web3forms.com.
 // Cilovy e-mail se nastavuje v uctu Web3Forms k tomuto klici.
 const WEB3FORMS_ACCESS_KEY = "7f58dd82-3b2b-459b-9db5-b127616e9af9";
 
-function parsePrice(price) {
-  const digits = String(price).replace(/[^0-9]/g, "");
-  return digits ? Number(digits) : 0;
-}
-
 function updateTotals() {
   if (!cart.length) { checkoutTotal.hidden = true; return; }
   const delivery = orderForm.delivery.value;
   const deliveryPrice = deliveryPrices[delivery] ?? 0;
-  const productsTotal = cart.reduce((sum, product) => sum + parsePrice(product.price), 0);
+  const productsTotalCents = cart.reduce((sum, product) => sum + product.priceCents, 0);
   checkoutTotal.hidden = false;
-  checkoutDeliveryPrice.textContent = `${deliveryPrice} K\u010d`;
-  checkoutTotalPrice.textContent = `${productsTotal + deliveryPrice} K\u010d`;
+  checkoutDeliveryPrice.textContent = formatPrice(deliveryPrice * 100);
+  checkoutTotalPrice.textContent = formatPrice(productsTotalCents + (deliveryPrice * 100));
 }
-
-/* Packeta widget je vypnuty, dokud nebude nastavena doprava a API klic.
-if (false) packetaPickButton?.addEventListener("click", () => {
-  if (typeof Packeta === "undefined" || !PACKETA_API_KEY) {
-    window.alert("Widget Z\u00e1silkovny je\u0161t\u011b nen\u00ed nastaven\u00fd (chyb\u00ed API kl\u00ed\u010d z client.packeta.com).");
-    return;
-  }
-  Packeta.Widget.pick(PACKETA_API_KEY, (point) => {
-    if (!point) return;
-    packetaIdInput.value = point.id;
-    packetaNameInput.value = point.name;
-    packetaSelected.textContent = `Vybran\u00e9 m\u00edsto: ${point.name}`;
-  }, { country: "cz", language: "cs" });
-}); */
 
 function groupCart(items) {
   const groups = [];
@@ -101,7 +83,7 @@ function saveCart() {
 function renderSummary() {
   emptyNotice.hidden = cart.length > 0;
   orderForm.hidden = cart.length === 0;
-  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${product.price}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
+  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
 }
 
 function setQuantity(id, qty) {
@@ -181,7 +163,8 @@ orderForm.addEventListener("submit", async (event) => {
 
   const delivery = orderForm.delivery.value;
   const payment = orderForm.payment.value;
-  const orderList = groupCart(cart).map(({ product, qty }) => `- ${product.name}: ${qty} ks (${product.price} / ks)`).join("\n");
+  const submittedAt = new Date().toISOString();
+  const orderList = groupCart(cart).map(({ product, qty }) => `- ${product.name}: ${qty} ks (${formatPrice(product.priceCents)} / ks)`).join("\n");
   const lines = [
     "Dobrý den, nová objednávka z e-shopu:",
     "",
@@ -191,6 +174,8 @@ orderForm.addEventListener("submit", async (event) => {
     `Doprava: ${deliveryLabels[delivery]}`,
     `Platba: ${paymentLabels[payment]}`,
     `Celková cena: ${checkoutTotalPrice.textContent}`,
+    `Obchodní podmínky: potvrzeno (${TERMS_VERSION})`,
+    `Čas odeslání: ${submittedAt}`,
     "",
     "Kontaktní údaje zákazníka:",
     `Jméno: ${orderForm.name.value}`,
@@ -224,6 +209,9 @@ orderForm.addEventListener("submit", async (event) => {
         total: checkoutTotalPrice.textContent,
         address: delivery === "kuryr" ? orderForm.address.value : "Osobní odběr",
         note: orderForm.note.value || "-",
+        terms_acknowledged: "Ano",
+        terms_version: TERMS_VERSION,
+        submitted_at: submittedAt,
         message: lines.join("\n")
       })
     });

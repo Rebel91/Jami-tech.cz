@@ -48,10 +48,13 @@ Fotografii připoj k produktu v `products.js`:
 
 ```js
 {
+	id: "jedinecne-id-produktu",
 	name: "Název produktu",
 	description: "Krátký popis produktu.",
-	price: "299 Kč",
+	priceCents: 29900,
 	image: "pictures/produkty/02.webp",
+	imageWidth: 1200,
+	imageHeight: 1200,
 	category: "vyrobky"
 }
 ```

@@ -5,13 +5,23 @@ const CATEGORIES = {
   prislusenstvi: "Příslušenství"
 };
 
+function formatPrice(priceCents) {
+  const crowns = priceCents / 100;
+  return `${crowns.toLocaleString("cs-CZ", {
+    minimumFractionDigits: Number.isInteger(crowns) ? 0 : 2,
+    maximumFractionDigits: 2
+  })} Kč`;
+}
+
 const products = [
   {
     id: "3dlac-400ml",
     name: "3DLAC",
     description: "3DLAC je adhezní sprej, který zajišťuje pevné přilnutí první vrstvy k tiskové podložce a po vychladnutí snadné odejmutí hotového výtisku. Vhodný pro PLA, PETG, ABS a mnoho dalších materiálů na skleněné i jiné podložce.",
-    price: "199 Kč",
+    priceCents: 19900,
     image: "pictures/produkty/01.webp",
+    imageWidth: 810,
+    imageHeight: 800,
     category: "prislusenstvi"
   },
 
@@ -20,8 +30,10 @@ const products = [
   //   id: "jedinecne-id-produktu",
   //   name: "Název produktu",
   //   description: "Krátký popis produktu.",
-  //   price: "299 Kč",
+  //   priceCents: 29900,
   //   image: "pictures/produkty/02.webp",
+  //   imageWidth: 1200,
+  //   imageHeight: 1200,
   //   category: "vyrobky"
   // }
 ];

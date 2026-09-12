@@ -52,7 +52,7 @@ function renderProducts() {
   emptyProducts.hidden = visibleProducts.length > 0;
   productGrid.innerHTML = visibleProducts.map((product) => {
     const index = products.indexOf(product);
-    return `<article class="product-card"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p><div class="product-meta"><span class="product-price">${product.price}</span><button class="add-to-cart" data-index="${index}" type="button">PŘIDAT</button></div></div></article>`;
+    return `<article class="product-card"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p><div class="product-meta"><span class="product-price">${formatPrice(product.priceCents)}</span><button class="add-to-cart" data-index="${index}" type="button">PŘIDAT</button></div></div></article>`;
   }).join("");
   productGrid.querySelectorAll(".product-image img").forEach((image) => {
     image.addEventListener("error", () => {
@@ -89,7 +89,7 @@ function renderCart() {
     items.innerHTML = '<p class="cart-empty">Košík je zatím prázdný.</p>';
     return;
   }
-  items.innerHTML = groupCart(state.cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${product.price}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
+  items.innerHTML = groupCart(state.cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
 }
 
 function setQuantity(id, qty) {
