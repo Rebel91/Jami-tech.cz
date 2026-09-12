@@ -1,20 +1,35 @@
 const navToggle = document.querySelector("#nav-toggle");
 const mainNav = document.querySelector("#main-nav");
 if (navToggle && mainNav) {
+  const closeMainNav = () => {
+    mainNav.classList.remove("is-open");
+    navToggle.setAttribute("aria-expanded", "false");
+    navToggle.setAttribute("aria-label", "Otevřít menu");
+  };
   navToggle.addEventListener("click", () => {
     const isOpen = mainNav.classList.toggle("is-open");
     navToggle.setAttribute("aria-expanded", String(isOpen));
+    navToggle.setAttribute("aria-label", isOpen ? "Zavřít menu" : "Otevřít menu");
   });
-  mainNav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => {
-    mainNav.classList.remove("is-open");
-    navToggle.setAttribute("aria-expanded", "false");
-  }));
+  mainNav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMainNav));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && mainNav.classList.contains("is-open")) {
+      closeMainNav();
+      navToggle.focus();
+    }
+  });
 }
 
 function readCart() {
   try {
     const savedCart = JSON.parse(localStorage.getItem("jami-cart") || "[]");
-    return Array.isArray(savedCart) ? savedCart : [];
+    if (!Array.isArray(savedCart)) return [];
+    return savedCart.flatMap((savedItem) => {
+      const product = products.find((item) => item.id === savedItem.id)
+        || products.find((item) => item.name === savedItem.name);
+      const quantity = Number.isInteger(savedItem.qty) ? Math.max(0, savedItem.qty) : 1;
+      return product ? Array(quantity).fill(product) : [];
+    });
   } catch {
     return [];
   }
@@ -71,27 +86,32 @@ if (false) packetaPickButton?.addEventListener("click", () => {
 function groupCart(items) {
   const groups = [];
   items.forEach((product) => {
-    const existing = groups.find((group) => group.product.name === product.name);
+    const existing = groups.find((group) => group.product.id === product.id);
     if (existing) existing.qty += 1;
     else groups.push({ product, qty: 1 });
   });
   return groups;
 }
 
+function saveCart() {
+  const storedCart = groupCart(cart).map(({ product, qty }) => ({ id: product.id, qty }));
+  localStorage.setItem("jami-cart", JSON.stringify(storedCart));
+}
+
 function renderSummary() {
   emptyNotice.hidden = cart.length > 0;
   orderForm.hidden = cart.length === 0;
-  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${product.price}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-name="${product.name}" type="button" aria-label="Uběrat kus">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-name="${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-name="${product.name}" type="button" aria-label="Přidat kus">+</button></div><button class="remove-item" data-cart-name="${product.name}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
+  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${product.price}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
 }
 
-function setQuantity(name, qty) {
-  const product = cart.find((item) => item.name === name);
+function setQuantity(id, qty) {
+  const product = products.find((item) => item.id === id);
   if (!product) return;
-  const remaining = cart.filter((item) => item.name !== name);
+  const remaining = cart.filter((item) => item.id !== id);
   cart.length = 0;
   cart.push(...remaining);
   for (let i = 0; i < qty; i += 1) cart.push(product);
-  localStorage.setItem("jami-cart", JSON.stringify(cart));
+  saveCart();
   renderSummary();
   updateTotals();
 }
@@ -100,18 +120,18 @@ itemsContainer.addEventListener("click", (event) => {
   const removeButton = event.target.closest(".remove-item");
   const qtyButton = event.target.closest(".qty-btn");
   if (removeButton) {
-    const name = removeButton.dataset.cartName;
-    const remaining = cart.filter((product) => product.name !== name);
+    const id = removeButton.dataset.cartId;
+    const remaining = cart.filter((product) => product.id !== id);
     cart.length = 0;
     cart.push(...remaining);
-    localStorage.setItem("jami-cart", JSON.stringify(cart));
+    saveCart();
     renderSummary();
     updateTotals();
   }
   if (qtyButton) {
-    const name = qtyButton.dataset.cartName;
-    const currentQty = cart.filter((product) => product.name === name).length;
-    setQuantity(name, qtyButton.dataset.qtyAction === "inc" ? currentQty + 1 : currentQty - 1);
+    const id = qtyButton.dataset.cartId;
+    const currentQty = cart.filter((product) => product.id === id).length;
+    setQuantity(id, qtyButton.dataset.qtyAction === "inc" ? currentQty + 1 : currentQty - 1);
   }
 });
 
@@ -119,7 +139,7 @@ itemsContainer.addEventListener("change", (event) => {
   const qtyInput = event.target.closest(".qty-input");
   if (!qtyInput) return;
   const qty = Math.max(0, Number(qtyInput.value) || 0);
-  setQuantity(qtyInput.dataset.cartName, qty);
+  setQuantity(qtyInput.dataset.cartId, qty);
 });
 
 const paymentNotes = {
@@ -161,7 +181,7 @@ orderForm.addEventListener("submit", async (event) => {
 
   const delivery = orderForm.delivery.value;
   const payment = orderForm.payment.value;
-  const orderList = cart.map((product) => `- ${product.name} (${product.price})`).join("\n");
+  const orderList = groupCart(cart).map(({ product, qty }) => `- ${product.name}: ${qty} ks (${product.price} / ks)`).join("\n");
   const lines = [
     "Dobrý den, nová objednávka z e-shopu:",
     "",
