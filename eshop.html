@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Originální výrobky z 3D tisku a praktické příslušenství od Jami tech. Nenašli jste vhodný výrobek? Poptat můžete také 3D tisk na míru.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <title>Výrobky z 3D tisku a příslušenství | Jami tech</title>
+  <link rel="canonical" href="https://jami-tech.cz/eshop.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="cs_CZ">
+  <meta property="og:site_name" content="Jami tech">
+  <meta property="og:title" content="Výrobky z 3D tisku a příslušenství | Jami tech">
+  <meta property="og:description" content="Originální 3D tištěné výrobky, praktické příslušenství a možnost výroby na míru.">
+  <meta property="og:url" content="https://jami-tech.cz/eshop.html">
+  <meta property="og:image" content="https://jami-tech.cz/pictures/logo/HERO.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="pictures/logo/JaMi_Original.svg">
+  <link rel="stylesheet" href="styles.css?v=1.0.0">
+</head>
+<body class="shop-page">
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Jami tech - úvod"><span class="brand-mark"><img src="pictures/logo/JaMi_Original.svg" alt=""><span>JT</span></span></a>
+    <nav class="main-nav" id="main-nav" aria-label="Hlavní navigace"><a href="index.html#sluzby">Služby</a><a href="index.html#portfolio">Portfolio</a><a class="nav-active" href="eshop.html">E-shop</a><a href="index.html#poptavka">Poptávka</a><a href="index.html#kontakt" class="nav-mobile-only">Kontakt</a></nav>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Otevřít menu" aria-expanded="false" aria-controls="main-nav"><span></span><span></span><span></span></button>
+    <button class="cart-button button button-small button-dark" id="cart-toggle" type="button" aria-expanded="false">Košík <span id="cart-count">0</span></button>
+  </header>
+
+  <main>
+    <section class="shop-hero section-shell"><div><p class="eyebrow"><span class="eyebrow-dot"></span> Jami tech / e-shop</p><h1>Věci, které už<br><em>mají tvar.</em></h1><p class="shop-hero-copy">Vyberte si z nabídky praktické a originální 3D výrobky nebo příslušenství.</p><p class="custom-print-prompt">Nenašli jste, co hledáte, nebo si chcete nechat vytisknout model na míru?</p><a class="button button-accent" href="index.html#poptavka">Poptat 3D tisk <span aria-hidden="true">↗</span></a></div></section>
+    <section class="shop-catalog section-shell">
+      <div class="catalog-toolbar">
+        <h2>Nabídka</h2>
+        <div class="category-filter">
+          <button class="filter-button is-active" type="button" data-filter="all">Vše</button>
+          <button class="filter-button" type="button" data-filter="prislusenstvi">Příslušenství</button>
+          <button class="filter-button" type="button" data-filter="vyrobky">Výrobky z 3D tisku</button>
+        </div>
+      </div>
+      <div class="product-grid shop-product-grid" id="shop-product-grid"></div>
+      <div class="empty-products" id="empty-products" hidden>V této kategorii zatím nejsou žádné produkty.</div>
+    </section>
+  </main>
+
+  <aside class="cart-drawer" id="cart-drawer" aria-hidden="true"><div class="cart-drawer-head"><h2>Tvůj košík</h2><button class="close-cart" id="cart-close" type="button" aria-label="Zavřít košík">×</button></div><div id="cart-items" class="cart-items"><p class="cart-empty">Košík je zatím prázdný.</p></div><div class="cart-drawer-foot"><p>Vyplnění doručení a platby dokončíš na další stránce.</p><button class="button button-accent" id="send-order" type="button">Pokračovat k objednávce <span>↗</span></button></div></aside><div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <footer class="site-footer"><div class="section-shell footer-bottom"><span>© 2026 Jami-tech</span><span class="footer-contact"><span>Email: info@jami-tech.cz</span><span>Tel.: +420 723 164 610</span></span><span class="footer-legal"><a href="legal/obchodni-podminky.html">Obchodní podmínky</a><a href="legal/ochrana-osobnich-udaju.html">Ochrana osobních údajů</a></span></div></footer>
+  <script src="products.js"></script>
+  <script src="eshop.js"></script>
+</body>
+</html>

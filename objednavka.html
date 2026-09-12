@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dokončení objednávky - Jami tech.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dokončení objednávky | Jami tech</title>
+  <link rel="canonical" href="https://jami-tech.cz/objednavka.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="pictures/logo/JaMi_Original.svg">
+  <link rel="stylesheet" href="styles.css?v=1.0.0">
+</head>
+<body class="shop-page">
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Jami tech - úvod"><span class="brand-mark"><img src="pictures/logo/JaMi_Original.svg" alt=""><span>JT</span></span></a>
+    <nav class="main-nav" id="main-nav" aria-label="Hlavní navigace"><a href="index.html#sluzby">Služby</a><a href="index.html#portfolio">Portfolio</a><a href="eshop.html">E-shop</a><a href="index.html#poptavka">Poptávka</a><a href="index.html#kontakt" class="nav-mobile-only">Kontakt</a></nav>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Otevřít menu" aria-expanded="false" aria-controls="main-nav"><span></span><span></span><span></span></button>
+    <a class="button button-small button-dark" href="eshop.html">Zpět do e-shopu ↗</a>
+  </header>
+
+  <main>
+    <section class="section-shell checkout-page">
+      <p class="eyebrow">E-shop</p>
+      <h1>Dokončení objednávky</h1>
+      <div id="order-success" class="checkout-success" hidden>
+        <h2>Objednávka byla úspěšně odeslána!</h2>
+        <p>Děkujeme za vaši objednávku. Na zadaný e-mail vám brzy pošleme potvrzení s podrobnostmi a platebními údaji.</p>
+        <a class="button button-accent" href="eshop.html">Zpět do e-shopu ↗</a>
+      </div>
+      <div class="checkout-layout" id="checkout-layout">
+        <div class="checkout-summary">
+          <h2>Košík</h2>
+          <div id="checkout-items" class="checkout-items"></div>
+          <div class="checkout-total" id="checkout-total" hidden>
+            <span>Doprava</span><span id="checkout-delivery-price"></span>
+            <span>Celkem</span><span id="checkout-total-price"></span>
+          </div>
+          <p class="checkout-empty" id="checkout-empty" hidden>Košík je prázdný. <a href="eshop.html">Vrať se do e-shopu</a> a vyber si produkty.</p>
+        </div>
+        <form id="order-form" class="order-form">
+          <label class="order-field">Jméno a příjmení<input type="text" name="name" id="order-name" required></label>
+          <label class="order-field">Telefon<input type="tel" name="phone" id="order-phone" required></label>
+          <label class="order-field">E-mail<input type="email" name="email" id="order-email" required></label>
+          <label class="order-field" id="order-address-field">Adresa doručení<input type="text" name="address" id="order-address"></label>
+          <fieldset class="order-field order-fieldset">
+            <legend>Způsob doručení</legend>
+            <label><input type="radio" name="delivery" value="kuryr" checked> Kurýrem na adresu (129 Kč)</label>
+            <label><input type="radio" name="delivery" value="osobne"> Osobní odběr (0 Kč)</label>
+          </fieldset>
+          <fieldset class="order-field order-fieldset">
+            <legend>Způsob platby</legend>
+            <label data-payment="prevod"><input type="radio" name="payment" value="prevod" checked> Bankovní převod</label>
+            <label data-payment="qr"><input type="radio" name="payment" value="qr"> QR kód</label>
+            <label data-payment="dobirka"><input type="radio" name="payment" value="dobirka"> Dobírka kurýrovi</label>
+            <label data-payment="hotove"><input type="radio" name="payment" value="hotove"> Hotově při osobním převzetí</label>
+          </fieldset>
+          <p class="order-payment-info" id="order-payment-info"></p>
+          <label class="order-field">Poznámka<textarea name="note" id="order-note" rows="2"></textarea></label>
+          <button class="button button-accent" id="send-order" type="submit">Odeslat objednávku <span>↗</span></button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="section-shell footer-bottom"><span>© 2026 Jami-tech</span><span class="footer-contact"><span>Email: info@jami-tech.cz</span><span>Tel.: +420 723 164 610</span></span><span class="footer-legal"><a href="legal/obchodni-podminky.html">Obchodní podmínky</a><a href="legal/ochrana-osobnich-udaju.html">Ochrana osobních údajů</a></span></div></footer>
+  <script src="objednavka.js"></script>
+</body>
+</html>

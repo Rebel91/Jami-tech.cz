@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jami-tech.cz/sitemap.xml
