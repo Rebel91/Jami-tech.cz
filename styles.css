@@ -186,7 +186,9 @@ body { font-size: 16px; }
 .portfolio-arrow-next { right: 14px; }
 .portfolio-section { padding-top: 0; }.portfolio-grid { display: flex; width: max-content; gap: 14px; }.portfolio-track { display: flex; flex: 0 0 auto; gap: 14px; }.portfolio-item { width: 263px; height: 263px; flex: 0 0 263px; min-height: 0; position: relative; }.portfolio-item span { position: absolute; bottom: 16px; left: 18px; color: var(--white); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }.portfolio-placeholder { width: 263px; height: 263px; overflow: hidden; display: grid; place-content: center; text-align: center; background: var(--dark); color: var(--accent); font: 700 17px var(--display); }.portfolio-placeholder.warm { background: var(--orange); color: var(--ink); }.portfolio-placeholder.dark { background: #899a8e; color: var(--ink); }.portfolio-placeholder small { display: block; margin-top: 8px; font: 400 10px var(--body); opacity: .8; }
 .portfolio-placeholder img { display: block; width: 100%; height: 100%; min-height: 100%; aspect-ratio: 1 / 1; object-fit: cover; object-position: center; }
-.portfolio-image-button, .product-image-button { width: 100%; height: 100%; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: zoom-in; }
+.portfolio-image-button, .product-image-button { width: 100%; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: zoom-in; }
+.portfolio-image-button { height: 100%; }
+.product-image-button { height: auto; aspect-ratio: 1 / 1; }
 .portfolio-image-button:focus-visible, .product-image-button:focus-visible, .portfolio-arrow:focus-visible, .image-lightbox button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .portfolio-placeholder img[src*="02.jpeg"] { transform: scale(1.22); }
 .portfolio-placeholder { border-radius: 8px; }
