@@ -3,11 +3,17 @@ import { DELIVERY, PAYMENT, PRODUCTS } from "./products.js";
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store",
-  "X-Content-Type-Options": "nosniff"
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
+  "Referrer-Policy": "no-referrer",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY"
 };
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["stl", "step", "stp", "obj", "3mf", "jpg", "jpeg", "png", "pdf"]);
+const TERMS_VERSION = "v3.0";
 const FIELD_LIMITS = {
   name: 120,
   email: 254,
@@ -96,6 +102,7 @@ export async function buildQuote(formData, reference = generateReference("P"), n
   const fields = readFields(formData, ["name", "email", "phone", "quantity", "material", "deadline", "message", "privacy"]);
   requireFields(fields, ["name", "email", "message", "privacy"]);
   validateEmail(fields.email);
+  validateConsent(fields.privacy, "Souhlas se zpracováním údajů nebyl potvrzen.");
   validateDeadline(fields.deadline, now);
   const attachment = formData.get("attachment");
   const attachments = attachment instanceof File && attachment.size > 0
@@ -141,6 +148,8 @@ export function buildOrder(formData, reference = generateReference("O")) {
   const fields = readFields(formData, ["name", "email", "phone", "delivery", "payment", "address", "note", "cart", "terms_version", "terms"]);
   requireFields(fields, ["name", "email", "phone", "delivery", "payment", "cart", "terms_version", "terms"]);
   validateEmail(fields.email);
+  validateConsent(fields.terms, "Souhlas s obchodními podmínkami nebyl potvrzen.");
+  if (fields.terms_version !== TERMS_VERSION) throw new FormError("Verze obchodních podmínek není aktuální. Obnovte stránku.");
   const delivery = DELIVERY[fields.delivery];
   const payment = PAYMENT[fields.payment];
   if (!delivery || !payment) throw new FormError("Neplatný způsob dopravy nebo platby.");
@@ -269,8 +278,18 @@ export function matchesFileSignature(extension, bytes) {
   if (extension === "jpg" || extension === "jpeg") return startsWith(0xff, 0xd8, 0xff);
   if (extension === "png") return startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
   if (extension === "pdf") return startsWith(0x25, 0x50, 0x44, 0x46, 0x2d);
-  if (extension === "3mf") return startsWith(0x50, 0x4b, 0x03, 0x04);
-  if (extension === "stl") return bytes.length >= 84 || decodePrefix(bytes).trimStart().toLowerCase().startsWith("solid");
+  if (extension === "3mf") {
+    if (!startsWith(0x50, 0x4b, 0x03, 0x04)) return false;
+    const archiveMetadata = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    return archiveMetadata.includes("[Content_Types].xml") && /3D\/[^\0]*\.model/i.test(archiveMetadata);
+  }
+  if (extension === "stl") {
+    const prefix = decodePrefix(bytes).trimStart().toLowerCase();
+    if (prefix.startsWith("solid") && prefix.includes("facet")) return true;
+    if (bytes.length < 84) return false;
+    const triangleCount = new DataView(bytes.buffer, bytes.byteOffset + 80, 4).getUint32(0, true);
+    return bytes.length === 84 + (triangleCount * 50);
+  }
   if (extension === "step" || extension === "stp") return decodePrefix(bytes).includes("ISO-10303-21");
   if (extension === "obj") return /(^|\n)\s*(v|vt|vn|f|o|g)\s+/m.test(decodePrefix(bytes));
   return false;
@@ -298,6 +317,10 @@ function requireFields(fields, required) {
 
 function validateEmail(email) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new FormError("Zadejte platnou e-mailovou adresu.");
+}
+
+function validateConsent(value, message) {
+  if (value !== "on") throw new FormError(message);
 }
 
 function text(formData, name) {
@@ -355,6 +378,7 @@ export function getCorsHeaders(origin, configuredOrigins = "") {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
   };
 }

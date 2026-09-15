@@ -10,7 +10,11 @@ test("vygeneruje referenci z českého data a náhodného identifikátoru", () =
 
 test("povolí pouze nakonfigurovaný origin", () => {
   assert.equal(getCorsHeaders("https://attacker.example", "https://jami-tech.cz"), null);
-  assert.equal(getCorsHeaders("https://jami-tech.cz", "https://jami-tech.cz")["Access-Control-Allow-Origin"], "https://jami-tech.cz");
+  const headers = getCorsHeaders("https://jami-tech.cz", "https://jami-tech.cz");
+  assert.equal(headers["Access-Control-Allow-Origin"], "https://jami-tech.cz");
+  assert.equal(headers["Access-Control-Max-Age"], "86400");
+  assert.equal(headers["Content-Security-Policy"], "default-src 'none'; frame-ancestors 'none'");
+  assert.equal(headers["X-Frame-Options"], "DENY");
 });
 
 test("kontroluje signatury podporovaných souborů", () => {
@@ -18,6 +22,10 @@ test("kontroluje signatury podporovaných souborů", () => {
   assert.equal(matchesFileSignature("png", new TextEncoder().encode("not an image")), false);
   assert.equal(matchesFileSignature("step", new TextEncoder().encode("ISO-10303-21; HEADER;")), true);
   assert.equal(matchesFileSignature("obj", new TextEncoder().encode("v 0.0 1.0 2.0\nf 1 2 3")), true);
+  assert.equal(matchesFileSignature("stl", new Uint8Array(84)), true);
+  assert.equal(matchesFileSignature("stl", new Uint8Array(85)), false);
+  assert.equal(matchesFileSignature("3mf", new TextEncoder().encode("PK\u0003\u0004[Content_Types].xml 3D/3dmodel.model")), true);
+  assert.equal(matchesFileSignature("3mf", new TextEncoder().encode("PK\u0003\u0004ordinary.zip")), false);
 });
 
 test("sestaví bezpečný text poptávky", async () => {
@@ -57,13 +65,13 @@ test("odmítne přílohu s podvrženou příponou", async () => {
 
 test("odmítne neplatný e-mail objednávky", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "spatne", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":1}]', terms_version: "v3", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "spatne", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":1}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
   assert.throws(() => buildOrder(data), /platnou e-mailovou adresu/);
 });
 
 test("spočítá cenu objednávky na serveru", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":2}]', terms_version: "v3", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":2}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
   const result = buildOrder(data);
   assert.match(result.subject, /527 Kč/);
   assert.match(result.text, /3DLAC: 2 ks/);
@@ -75,6 +83,17 @@ test("spočítá cenu objednávky na serveru", () => {
 
 test("odmítne neznámý produkt", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"podvrh","qty":1}]', terms_version: "v3", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"podvrh","qty":1}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
   assert.throws(() => buildOrder(data), /neplatnou položku/);
+});
+
+test("odmítne prázdný košík a neplatný souhlas", () => {
+  const base = { name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", terms_version: "v3.0", terms: "on" };
+  const emptyCart = new FormData();
+  for (const [name, value] of Object.entries({ ...base, cart: "[]" })) emptyCart.set(name, value);
+  assert.throws(() => buildOrder(emptyCart), /Košík je prázdný/);
+
+  const invalidConsent = new FormData();
+  for (const [name, value] of Object.entries({ ...base, cart: '[{"id":"3dlac-400ml","qty":1}]', terms: "no" })) invalidConsent.set(name, value);
+  assert.throws(() => buildOrder(invalidConsent), /Souhlas s obchodními podmínkami/);
 });
