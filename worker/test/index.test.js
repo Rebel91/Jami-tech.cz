@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { File } from "node:buffer";
 import test from "node:test";
-import { buildOrder, buildQuote, getCorsHeaders, matchesFileSignature } from "../src/index.js";
+import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature } from "../src/index.js";
+
+test("vygeneruje referenci z českého data a náhodného identifikátoru", () => {
+  const reference = generateReference("P", new Date("2026-09-15T12:00:00Z"), () => "a7c3f2b1-0000-4000-8000-000000000000");
+  assert.equal(reference, "P-20260915-A7C3F2");
+});
 
 test("povolí pouze nakonfigurovaný origin", () => {
   assert.equal(getCorsHeaders("https://attacker.example", "https://jami-tech.cz"), null);
@@ -25,8 +30,9 @@ test("sestaví bezpečný text poptávky", async () => {
   data.set("deadline", "2026-10-01");
   data.set("message", "Drzak na miru");
   data.set("privacy", "on");
-  const result = await buildQuote(data);
-  assert.match(result.subject, /Jan Novak/);
+  const result = await buildQuote(data, "P-20260915-A7C3F2");
+  assert.equal(result.subject, "[P-20260915-A7C3F2] Nová poptávka 3D tisku - Jan Novak");
+  assert.match(result.text, /Číslo poptávky: P-20260915-A7C3F2/);
   assert.match(result.text, /Drzak na miru/);
   assert.deepEqual(result.attachments, []);
 });

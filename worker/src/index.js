@@ -67,9 +67,10 @@ export default {
         return json({ success: false, message: "Ověření proti spamu selhalo. Obnovte stránku a zkuste to znovu." }, 400, corsHeaders);
       }
 
+      const reference = generateReference(pathname === "/quote" ? "P" : "O");
       const payload = pathname === "/quote"
-        ? await buildQuote(formData)
-        : buildOrder(formData);
+        ? await buildQuote(formData, reference)
+        : buildOrder(formData, reference);
       const emailResponse = await sendEmail(payload, env);
 
       if (!emailResponse.ok) {
@@ -77,7 +78,7 @@ export default {
         return json({ success: false, message: "E-mail se nepodařilo odeslat." }, 502, corsHeaders);
       }
 
-      return json({ success: true }, 200, corsHeaders);
+      return json({ success: true, reference }, 200, corsHeaders);
     } catch (error) {
       if (error instanceof FormError) return json({ success: false, message: error.message }, error.status, corsHeaders);
       console.error("Form submission failed", error);
@@ -86,7 +87,7 @@ export default {
   }
 };
 
-export async function buildQuote(formData) {
+export async function buildQuote(formData, reference = generateReference("P")) {
   const fields = readFields(formData, ["name", "email", "phone", "quantity", "material", "deadline", "message", "privacy"]);
   requireFields(fields, ["name", "email", "message", "privacy"]);
   validateEmail(fields.email);
@@ -96,10 +97,11 @@ export async function buildQuote(formData) {
     : [];
 
   return {
-    subject: `Nová poptávka 3D tisku - ${fields.name}`,
+    subject: `[${reference}] Nová poptávka 3D tisku - ${fields.name}`,
     replyTo: fields.email,
     text: [
-      "Nová poptávka 3D tisku", "",
+      "Nová poptávka 3D tisku",
+      `Číslo poptávky: ${reference}`, "",
       `Jméno: ${fields.name}`,
       `E-mail: ${fields.email}`,
       `Telefon: ${fields.phone || "-"}`,
@@ -112,7 +114,7 @@ export async function buildQuote(formData) {
   };
 }
 
-export function buildOrder(formData) {
+export function buildOrder(formData, reference = generateReference("O")) {
   const fields = readFields(formData, ["name", "email", "phone", "delivery", "payment", "address", "note", "cart", "terms_version", "terms"]);
   requireFields(fields, ["name", "email", "phone", "delivery", "payment", "cart", "terms_version", "terms"]);
   validateEmail(fields.email);
@@ -131,10 +133,11 @@ export function buildOrder(formData) {
   const total = formatPrice(productTotal + delivery.priceCents);
 
   return {
-    subject: `Nová objednávka z e-shopu - ${fields.name} (${total})`,
+    subject: `[${reference}] Nová objednávka z e-shopu - ${fields.name} (${total})`,
     replyTo: fields.email,
     text: [
-      "Nová objednávka z e-shopu", "",
+      "Nová objednávka z e-shopu",
+      `Číslo objednávky: ${reference}`, "",
       "Objednané položky:", ...items, "",
       `Doprava: ${delivery.label}`,
       `Platba: ${payment}`,
@@ -148,6 +151,20 @@ export function buildOrder(formData) {
     ].join("\n"),
     attachments: []
   };
+}
+
+export function generateReference(prefix, date = new Date(), createId = () => crypto.randomUUID()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Prague",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const datePart = ["year", "month", "day"]
+    .map((type) => parts.find((part) => part.type === type)?.value)
+    .join("");
+  const randomPart = createId().replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `${prefix}-${datePart}-${randomPart}`;
 }
 
 function parseCart(value) {
