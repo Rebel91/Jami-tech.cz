@@ -14,7 +14,7 @@ Pro pohodlnější kontrolu změn použij ve VS Code **Live Server**.
 
 ## Formulářový backend
 
-Poptávky i objednávky přijímá Cloudflare Worker ve složce `worker/`. Worker ověřuje Cloudflare Turnstile, povolený původ požadavku, délku polí a u příloh také velikost, příponu a signaturu souboru. E-mail doručuje Resend. Tajné klíče nesmí být uložené v repozitáři.
+Poptávky i objednávky přijímá Cloudflare Worker ve složce `worker/`. Worker ověřuje Cloudflare Turnstile, povolený původ požadavku, délku polí a u příloh také velikost, příponu a signaturu souboru. Resend doručí interní zprávu na adresu provozovatele a zákazníkovi odešle potvrzení s referenčním číslem a souhrnem. Tajné klíče nesmí být uložené v repozitáři.
 
 ### První nasazení
 

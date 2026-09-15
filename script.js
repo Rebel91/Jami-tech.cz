@@ -57,8 +57,6 @@ if (portfolioWindow && portfolioGrid && portfolioTrack) {
   };
   if (!prefersReducedMotion) requestAnimationFrame(tick);
 
-  portfolioWindow.addEventListener("mouseenter", () => { paused = true; });
-  portfolioWindow.addEventListener("mouseleave", () => { paused = false; });
   portfolioWindow.addEventListener("focusin", () => { paused = true; });
   portfolioWindow.addEventListener("focusout", (event) => {
     if (!portfolioWindow.contains(event.relatedTarget)) paused = false;
@@ -196,8 +194,12 @@ if (quoteForm && quoteSubmit && quoteStatus) {
       if (!response.ok || !result.success) throw new Error(result.message || "Odeslání se nezdařilo");
 
       quoteForm.reset();
-      quoteStatus.textContent = `Děkujeme. Poptávka ${result.reference} byla odeslána a brzy se vám ozveme.`;
-      quoteStatus.className = "quote-form-status is-success";
+      quoteStatus.textContent = "";
+      quoteStatus.className = "quote-form-status";
+      window.JamiForms.showSuccess(
+        "Poptávka byla odeslána",
+        `Děkujeme. Vaše poptávka ${result.reference} byla úspěšně odeslána. Brzy se vám ozveme.`
+      );
     } catch (error) {
       console.error("Quote submission failed", error);
       quoteStatus.textContent = "Poptávku se nepodařilo odeslat. Zkuste to znovu nebo napište na info@jami-tech.cz.";

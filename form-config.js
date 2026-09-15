@@ -35,5 +35,46 @@ window.JamiForms = {
 
   resetTurnstile(widgetId) {
     if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId);
+  },
+
+  showSuccess(title, message) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "form-success-dialog";
+    dialog.setAttribute("aria-labelledby", "form-success-title");
+
+    const content = document.createElement("div");
+    content.className = "form-success-content";
+
+    const closeButton = document.createElement("button");
+    closeButton.className = "form-success-close";
+    closeButton.type = "button";
+    closeButton.setAttribute("aria-label", "Zavřít potvrzení");
+    closeButton.title = "Zavřít";
+    closeButton.textContent = "×";
+
+    const heading = document.createElement("h2");
+    heading.id = "form-success-title";
+    heading.textContent = title;
+
+    const text = document.createElement("p");
+    text.textContent = message;
+
+    const confirmButton = document.createElement("button");
+    confirmButton.className = "form-success-confirm";
+    confirmButton.type = "button";
+    confirmButton.textContent = "Zavřít";
+
+    content.append(closeButton, heading, text, confirmButton);
+    dialog.append(content);
+    document.body.append(dialog);
+
+    const close = () => dialog.close();
+    closeButton.addEventListener("click", close);
+    confirmButton.addEventListener("click", close);
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) close();
+    });
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    dialog.showModal();
   }
 };

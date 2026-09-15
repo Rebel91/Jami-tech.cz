@@ -191,8 +191,11 @@ orderForm.addEventListener("submit", async (event) => {
       if (checkoutLayout) checkoutLayout.hidden = true;
       if (orderSuccess) {
         orderSuccess.hidden = false;
-        orderSuccess.scrollIntoView({ behavior: "smooth" });
       }
+      window.JamiForms.showSuccess(
+        "Objednávka byla odeslána",
+        `Děkujeme. Vaše objednávka ${result.reference} byla úspěšně odeslána. Podrobnosti a platební údaje vám pošleme e-mailem.`
+      );
     } else {
       throw new Error(result.message || "Chyba při odesílání");
     }

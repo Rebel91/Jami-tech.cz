@@ -287,9 +287,18 @@ body { font-size: 14px; }
 .turnstile-slot { min-height: 65px; margin-top: 20px; overflow: hidden; }
 .turnstile-slot:empty { display: none; }
 .quote-form-status { min-height: 22px; margin: 15px 0 0; color: #b9c1bc; font-size: 13px; }
-.quote-form-status.is-success { color: var(--accent); }
+.quote-form-status.is-success { color: var(--white); }
 .quote-form-status.is-error { color: #ff8b73; }
 .quote-submit { min-width: 190px; margin-top: 8px; background: #c72c2c !important; color: #fff !important; }
+.form-success-dialog { width: min(480px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); border: 0; border-radius: 8px; padding: 0; overflow: auto; background: var(--white); color: #101010; box-shadow: 0 24px 70px rgba(0, 0, 0, .42); }
+.form-success-dialog::backdrop { background: rgba(0, 0, 0, .68); }
+.form-success-content { position: relative; padding: 42px 38px 34px; text-align: center; }
+.form-success-content h2 { margin: 0; color: #101010; font-size: 28px; line-height: 1.15; letter-spacing: 0; }
+.form-success-content p { margin: 20px 0 28px; color: #101010; font-size: 19px; line-height: 1.55; }
+.form-success-close { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; border: 0; padding: 0; background: transparent; color: #101010; font: 400 30px/1 var(--body); cursor: pointer; }
+.form-success-confirm { min-width: 130px; border: 0; border-radius: 8px; padding: 13px 22px; background: #101010; color: var(--white); font: 700 16px var(--body); cursor: pointer; }
+.form-success-close:focus-visible, .form-success-confirm:focus-visible { outline: 3px solid #c72c2c; outline-offset: 3px; }
+@media (max-width: 520px) { .form-success-content { padding: 40px 24px 28px; }.form-success-content h2 { font-size: 25px; }.form-success-content p { font-size: 18px; } }
 .quote-submit:disabled { cursor: wait; opacity: .65; transform: none; }
 @media (max-width: 850px) {
   :root { --section-gap: 78px; }

@@ -78,6 +78,11 @@ export default {
         return json({ success: false, message: "E-mail se nepodařilo odeslat." }, 502, corsHeaders);
       }
 
+      const confirmationResponse = await sendEmail(payload.confirmation, env);
+      if (!confirmationResponse.ok) {
+        console.error("Resend confirmation failed", confirmationResponse.status, await confirmationResponse.text());
+      }
+
       return json({ success: true, reference }, 200, corsHeaders);
     } catch (error) {
       if (error instanceof FormError) return json({ success: false, message: error.message }, error.status, corsHeaders);
@@ -111,7 +116,24 @@ export async function buildQuote(formData, reference = generateReference("P"), n
       `Požadovaný termín: ${fields.deadline || "-"}`, "",
       "Popis:", fields.message
     ].join("\n"),
-    attachments
+    attachments,
+    confirmation: {
+      to: fields.email,
+      replyTo: null,
+      subject: `Přijetí poptávky ${reference} | Jami tech`,
+      text: [
+        `Dobrý den, ${fields.name},`, "",
+        "děkujeme za vaši poptávku. Úspěšně jsme ji přijali a brzy se vám ozveme.",
+        `Číslo poptávky: ${reference}`, "",
+        `Počet kusů: ${fields.quantity || "-"}`,
+        `Materiál: ${fields.material || "-"}`,
+        `Požadovaný termín: ${fields.deadline || "-"}`, "",
+        "Popis:", fields.message, "",
+        "S pozdravem",
+        "Jami tech"
+      ].join("\n"),
+      attachments: []
+    }
   };
 }
 
@@ -150,7 +172,26 @@ export function buildOrder(formData, reference = generateReference("O")) {
       `E-mail: ${fields.email}`,
       `Telefon: ${fields.phone}`
     ].join("\n"),
-    attachments: []
+    attachments: [],
+    confirmation: {
+      to: fields.email,
+      replyTo: null,
+      subject: `Přijetí objednávky ${reference} | Jami tech`,
+      text: [
+        `Dobrý den, ${fields.name},`, "",
+        "děkujeme za vaši objednávku. Úspěšně jsme ji přijali.",
+        `Číslo objednávky: ${reference}`, "",
+        "Objednané položky:", ...items, "",
+        `Doprava: ${delivery.label}`,
+        `Platba: ${payment}`,
+        `Celková cena: ${total}`,
+        `Adresa: ${fields.address || "Osobní odběr"}`, "",
+        "Toto je automatické potvrzení přijetí objednávky. Po kontrole objednávky vám zašleme další informace.", "",
+        "S pozdravem",
+        "Jami tech"
+      ].join("\n"),
+      attachments: []
+    }
   };
 }
 
@@ -297,8 +338,8 @@ async function sendEmail(payload, env) {
     },
     body: JSON.stringify({
       from: env.MAIL_FROM,
-      to: [env.MAIL_TO],
-      reply_to: payload.replyTo,
+      to: [payload.to || env.MAIL_TO],
+      reply_to: payload.replyTo || env.MAIL_TO,
       subject: payload.subject,
       text: payload.text,
       attachments: payload.attachments

@@ -35,6 +35,10 @@ test("sestaví bezpečný text poptávky", async () => {
   assert.match(result.text, /Číslo poptávky: P-20260915-A7C3F2/);
   assert.match(result.text, /Drzak na miru/);
   assert.deepEqual(result.attachments, []);
+  assert.equal(result.confirmation.to, "jan@example.com");
+  assert.match(result.confirmation.subject, /Přijetí poptávky P-20260915-A7C3F2/);
+  assert.match(result.confirmation.text, /Požadovaný termín: 2026-10-01/);
+  assert.deepEqual(result.confirmation.attachments, []);
 });
 
 test("povolí termín nejdříve třetí den", async () => {
@@ -63,6 +67,10 @@ test("spočítá cenu objednávky na serveru", () => {
   const result = buildOrder(data);
   assert.match(result.subject, /527 Kč/);
   assert.match(result.text, /3DLAC: 2 ks/);
+  assert.equal(result.confirmation.to, "jan@example.com");
+  assert.match(result.confirmation.subject, /Přijetí objednávky O-/);
+  assert.match(result.confirmation.text, /Celková cena: 527 Kč/);
+  assert.deepEqual(result.confirmation.attachments, []);
 });
 
 test("odmítne neznámý produkt", () => {
