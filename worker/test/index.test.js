@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { File } from "node:buffer";
 import test from "node:test";
-import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature } from "../src/index.js";
+import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline } from "../src/index.js";
 
 test("vygeneruje referenci z českého data a náhodného identifikátoru", () => {
   const reference = generateReference("P", new Date("2026-09-15T12:00:00Z"), () => "a7c3f2b1-0000-4000-8000-000000000000");
@@ -30,11 +30,18 @@ test("sestaví bezpečný text poptávky", async () => {
   data.set("deadline", "2026-10-01");
   data.set("message", "Drzak na miru");
   data.set("privacy", "on");
-  const result = await buildQuote(data, "P-20260915-A7C3F2");
+  const result = await buildQuote(data, "P-20260915-A7C3F2", new Date("2026-09-15T12:00:00Z"));
   assert.equal(result.subject, "[P-20260915-A7C3F2] Nová poptávka 3D tisku - Jan Novak");
   assert.match(result.text, /Číslo poptávky: P-20260915-A7C3F2/);
   assert.match(result.text, /Drzak na miru/);
   assert.deepEqual(result.attachments, []);
+});
+
+test("povolí termín nejdříve třetí den", async () => {
+  assert.equal(minimumDeadline(new Date("2026-09-15T22:30:00Z")), "2026-09-19");
+  const data = new FormData();
+  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", deadline: "2026-09-17", message: "Test", privacy: "on" })) data.set(name, value);
+  await assert.rejects(() => buildQuote(data, "P-TEST", new Date("2026-09-15T12:00:00Z")), /nejdříve za 3 dny/);
 });
 
 test("odmítne přílohu s podvrženou příponou", async () => {

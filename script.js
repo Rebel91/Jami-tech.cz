@@ -147,6 +147,20 @@ const FORM_API_BASE_URL = window.JAMI_FORM_CONFIG?.apiBaseUrl?.replace(/\/$/, ""
 const quoteTurnstile = window.JamiForms?.renderTurnstile("#quote-turnstile", "quote") ?? Promise.resolve(null);
 
 if (quoteForm && quoteSubmit && quoteStatus) {
+  const deadlineInput = quoteForm.elements.deadline;
+  const pragueParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Prague",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const datePart = (type) => Number(pragueParts.find((part) => part.type === type)?.value);
+  deadlineInput.min = new Date(Date.UTC(datePart("year"), datePart("month") - 1, datePart("day") + 3))
+    .toISOString()
+    .slice(0, 10);
+  const deadlineLabel = deadlineInput.previousElementSibling;
+  if (deadlineLabel) deadlineLabel.textContent = "Požadovaný termín (nejdříve za 3 dny)";
+
   quoteForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!quoteForm.reportValidity()) return;
@@ -182,7 +196,7 @@ if (quoteForm && quoteSubmit && quoteStatus) {
       if (!response.ok || !result.success) throw new Error(result.message || "Odeslání se nezdařilo");
 
       quoteForm.reset();
-      quoteStatus.textContent = "Děkujeme. Poptávka byla odeslána a brzy se vám ozveme.";
+      quoteStatus.textContent = `Děkujeme. Poptávka ${result.reference} byla odeslána a brzy se vám ozveme.`;
       quoteStatus.className = "quote-form-status is-success";
     } catch (error) {
       console.error("Quote submission failed", error);

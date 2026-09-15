@@ -87,10 +87,11 @@ export default {
   }
 };
 
-export async function buildQuote(formData, reference = generateReference("P")) {
+export async function buildQuote(formData, reference = generateReference("P"), now = new Date()) {
   const fields = readFields(formData, ["name", "email", "phone", "quantity", "material", "deadline", "message", "privacy"]);
   requireFields(fields, ["name", "email", "message", "privacy"]);
   validateEmail(fields.email);
+  validateDeadline(fields.deadline, now);
   const attachment = formData.get("attachment");
   const attachments = attachment instanceof File && attachment.size > 0
     ? [await validateAttachment(attachment)]
@@ -165,6 +166,24 @@ export function generateReference(prefix, date = new Date(), createId = () => cr
     .join("");
   const randomPart = createId().replace(/-/g, "").slice(0, 6).toUpperCase();
   return `${prefix}-${datePart}-${randomPart}`;
+}
+
+export function minimumDeadline(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Prague",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const part = (type) => Number(parts.find((item) => item.type === type)?.value);
+  return new Date(Date.UTC(part("year"), part("month") - 1, part("day") + 3)).toISOString().slice(0, 10);
+}
+
+function validateDeadline(deadline, now) {
+  if (!deadline) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline) || deadline < minimumDeadline(now)) {
+    throw new FormError("Požadovaný termín musí být nejdříve za 3 dny.");
+  }
 }
 
 function parseCart(value) {
