@@ -77,19 +77,20 @@ export default {
       const payload = pathname === "/quote"
         ? await buildQuote(formData, reference)
         : buildOrder(formData, reference);
-      const emailResponse = await sendEmail(payload, env);
+      const emailResponse = await sendEmailWithRetry(payload, env);
 
       if (!emailResponse.ok) {
         console.error("Resend failed", emailResponse.status, await emailResponse.text());
         return json({ success: false, message: "E-mail se nepodařilo odeslat." }, 502, corsHeaders);
       }
 
-      const confirmationResponse = await sendEmail(payload.confirmation, env);
+      const confirmationResponse = await sendEmailWithRetry(payload.confirmation, env);
+      const confirmationSent = confirmationResponse.ok;
       if (!confirmationResponse.ok) {
         console.error("Resend confirmation failed", confirmationResponse.status, await confirmationResponse.text());
       }
 
-      return json({ success: true, reference }, 200, corsHeaders);
+      return json({ success: true, reference, confirmationSent }, 200, corsHeaders);
     } catch (error) {
       if (error instanceof FormError) return json({ success: false, message: error.message }, error.status, corsHeaders);
       console.error("Form submission failed", error);
@@ -110,6 +111,7 @@ export async function buildQuote(formData, reference = generateReference("P"), n
     : [];
 
   return {
+    idempotencyKey: `${reference}-internal`,
     subject: `[${reference}] Nová poptávka 3D tisku - ${fields.name}`,
     replyTo: fields.email,
     text: [
@@ -125,6 +127,7 @@ export async function buildQuote(formData, reference = generateReference("P"), n
     ].join("\n"),
     attachments,
     confirmation: {
+      idempotencyKey: `${reference}-confirmation`,
       to: fields.email,
       replyTo: null,
       subject: `Přijetí poptávky ${reference} | Jami tech`,
@@ -165,6 +168,7 @@ export function buildOrder(formData, reference = generateReference("O")) {
   const total = formatPrice(productTotal + delivery.priceCents);
 
   return {
+    idempotencyKey: `${reference}-internal`,
     subject: `[${reference}] Nová objednávka z e-shopu - ${fields.name} (${total})`,
     replyTo: fields.email,
     text: [
@@ -183,6 +187,7 @@ export function buildOrder(formData, reference = generateReference("O")) {
     ].join("\n"),
     attachments: [],
     confirmation: {
+      idempotencyKey: `${reference}-confirmation`,
       to: fields.email,
       replyTo: null,
       subject: `Přijetí objednávky ${reference} | Jami tech`,
@@ -357,7 +362,7 @@ async function sendEmail(payload, env) {
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
-      "Idempotency-Key": crypto.randomUUID()
+      "Idempotency-Key": payload.idempotencyKey
     },
     body: JSON.stringify({
       from: env.MAIL_FROM,
@@ -368,6 +373,19 @@ async function sendEmail(payload, env) {
       attachments: payload.attachments
     })
   });
+}
+
+export async function sendEmailWithRetry(payload, env, sender = sendEmail) {
+  let response;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await sender(payload, env);
+      if (response.ok || (response.status !== 429 && response.status < 500)) return response;
+    } catch (error) {
+      if (attempt === 1) throw error;
+    }
+  }
+  return response;
 }
 
 export function getCorsHeaders(origin, configuredOrigins = "") {

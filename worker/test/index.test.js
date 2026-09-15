@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { File } from "node:buffer";
 import test from "node:test";
-import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline } from "../src/index.js";
+import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline, sendEmailWithRetry } from "../src/index.js";
 
 test("vygeneruje referenci z českého data a náhodného identifikátoru", () => {
   const reference = generateReference("P", new Date("2026-09-15T12:00:00Z"), () => "a7c3f2b1-0000-4000-8000-000000000000");
@@ -43,7 +43,9 @@ test("sestaví bezpečný text poptávky", async () => {
   assert.match(result.text, /Číslo poptávky: P-20260915-A7C3F2/);
   assert.match(result.text, /Drzak na miru/);
   assert.deepEqual(result.attachments, []);
+  assert.equal(result.idempotencyKey, "P-20260915-A7C3F2-internal");
   assert.equal(result.confirmation.to, "jan@example.com");
+  assert.equal(result.confirmation.idempotencyKey, "P-20260915-A7C3F2-confirmation");
   assert.match(result.confirmation.subject, /Přijetí poptávky P-20260915-A7C3F2/);
   assert.match(result.confirmation.text, /Požadovaný termín: 2026-10-01/);
   assert.deepEqual(result.confirmation.attachments, []);
@@ -96,4 +98,21 @@ test("odmítne prázdný košík a neplatný souhlas", () => {
   const invalidConsent = new FormData();
   for (const [name, value] of Object.entries({ ...base, cart: '[{"id":"3dlac-400ml","qty":1}]', terms: "no" })) invalidConsent.set(name, value);
   assert.throws(() => buildOrder(invalidConsent), /Souhlas s obchodními podmínkami/);
+});
+
+test("zopakuje pouze dočasně odmítnutý e-mail", async () => {
+  let attempts = 0;
+  const temporaryFailure = async () => new Response(null, { status: ++attempts === 1 ? 503 : 200 });
+  const recovered = await sendEmailWithRetry({}, {}, temporaryFailure);
+  assert.equal(recovered.ok, true);
+  assert.equal(attempts, 2);
+
+  attempts = 0;
+  const permanentFailure = async () => {
+    attempts += 1;
+    return new Response(null, { status: 400 });
+  };
+  const rejected = await sendEmailWithRetry({}, {}, permanentFailure);
+  assert.equal(rejected.status, 400);
+  assert.equal(attempts, 1);
 });

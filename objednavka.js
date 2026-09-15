@@ -191,10 +191,15 @@ orderForm.addEventListener("submit", async (event) => {
       if (checkoutLayout) checkoutLayout.hidden = true;
       if (orderSuccess) {
         orderSuccess.hidden = false;
+        const successText = orderSuccess.querySelector("p");
+        if (successText) successText.textContent = `Objednávku evidujeme pod číslem ${result.reference}.`;
       }
+      const confirmationMessage = result.confirmationSent
+        ? `Děkujeme. Vaše objednávka ${result.reference} byla úspěšně přijata. Potvrzení s podrobnostmi jsme poslali na váš e-mail.`
+        : `Vaše objednávka ${result.reference} byla přijata, ale potvrzovací e-mail se nepodařilo odeslat. Číslo si prosím poznamenejte. Objednávku znovu neodesílejte.`;
       window.JamiForms.showSuccess(
-        "Objednávka byla odeslána",
-        `Děkujeme. Vaše objednávka ${result.reference} byla úspěšně odeslána. Podrobnosti a platební údaje vám pošleme e-mailem.`
+        result.confirmationSent ? "Objednávka byla odeslána" : "Objednávka byla přijata",
+        confirmationMessage
       );
     } else {
       throw new Error(result.message || "Chyba při odesílání");

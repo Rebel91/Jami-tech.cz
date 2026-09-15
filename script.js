@@ -196,9 +196,12 @@ if (quoteForm && quoteSubmit && quoteStatus) {
       quoteForm.reset();
       quoteStatus.textContent = "";
       quoteStatus.className = "quote-form-status";
+      const confirmationMessage = result.confirmationSent
+        ? `Děkujeme. Vaše poptávka ${result.reference} byla úspěšně odeslána. Potvrzení jsme poslali na váš e-mail.`
+        : `Vaše poptávka ${result.reference} byla přijata, ale potvrzovací e-mail se nepodařilo odeslat. Číslo si prosím poznamenejte. Formulář znovu neodesílejte.`;
       window.JamiForms.showSuccess(
-        "Poptávka byla odeslána",
-        `Děkujeme. Vaše poptávka ${result.reference} byla úspěšně odeslána. Brzy se vám ozveme.`
+        result.confirmationSent ? "Poptávka byla odeslána" : "Poptávka byla přijata",
+        confirmationMessage
       );
     } catch (error) {
       console.error("Quote submission failed", error);
