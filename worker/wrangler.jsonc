@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jami-tech-forms",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "forms.jami-tech.cz",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://jami-tech.cz,https://www.jami-tech.cz",
+    "EXPECTED_HOSTNAME": "jami-tech.cz",
+    "MAIL_FROM": "Jami tech <formulare@jami-tech.cz>",
+    "MAIL_TO": "info@jami-tech.cz"
+  }
+}

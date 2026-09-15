@@ -12,6 +12,37 @@ open index.html
 
 Pro pohodlnější kontrolu změn použij ve VS Code **Live Server**.
 
+## Formulářový backend
+
+Poptávky i objednávky přijímá Cloudflare Worker ve složce `worker/`. Worker ověřuje Cloudflare Turnstile, povolený původ požadavku, délku polí a u příloh také velikost, příponu a signaturu souboru. E-mail doručuje Resend. Tajné klíče nesmí být uložené v repozitáři.
+
+### První nasazení
+
+1. Založ účet Cloudflare, přidej doménu `jami-tech.cz` a podle pokynů Cloudflare změň nameservery u registrátora. Před změnou ověř, že Cloudflare převzal všechny DNS záznamy používané GitHub Pages a e-mailem.
+2. V Cloudflare Turnstile vytvoř widget typu Managed pro hostname `jami-tech.cz`. Ve [form-config.js](form-config.js) vlož veřejný Site Key do `turnstileSiteKey`.
+3. Založ účet Resend, přidej a ověř doménu `jami-tech.cz` pomocí DNS záznamů zobrazených Resendem a vytvoř API klíč s oprávněním k odesílání.
+4. V terminálu spusť:
+
+```bash
+cd worker
+npm install
+npx wrangler login
+npx wrangler secret put TURNSTILE_SECRET_KEY
+npx wrangler secret put RESEND_API_KEY
+npm run deploy
+```
+
+Hodnoty tajných klíčů zadej přímo do terminálu. Po nasazení musí adresa `https://forms.jami-tech.cz` odpovídat z nasazeného Workeru.
+
+### Kontrola a omezení provozu
+
+```bash
+cd worker
+npm run check
+```
+
+V Cloudflare nastav rate limiting pravidlo pro hostname `forms.jami-tech.cz`, například maximálně 5 POST požadavků z jedné IP adresy za minutu. Kontrola signatury přílohy brání jednoduchému přejmenování souboru, ale nenahrazuje plnohodnotný antivirový skener. Přílohy proto otevírej pouze v aktualizovaném a izolovaném programu.
+
 ## Portfolio
 
 Fotografie realizací patří do `pictures/portfolio/`.
@@ -58,6 +89,8 @@ Fotografii připoj k produktu v `products.js`:
 	category: "vyrobky"
 }
 ```
+
+Stejný produkt přidej také do serverového katalogu `worker/src/products.js`. Worker z něj počítá cenu objednávky a neznámé či podvržené položky odmítá.
 
 E-shop zobrazuje produktové fotografie ve čtvercových kartách a obdélníkové obrázky automaticky ořízne. Produkt proto fotografuj uprostřed a nech kolem něj volný okraj.
 

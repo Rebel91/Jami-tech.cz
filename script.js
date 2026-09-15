@@ -138,3 +138,60 @@ document.addEventListener("click", (event) => {
   document.addEventListener("keydown", handleKeydown);
   overlay.querySelector(".image-lightbox-close").focus();
 });
+
+const quoteForm = document.querySelector("#quote-form");
+const quoteSubmit = document.querySelector("#quote-submit");
+const quoteStatus = document.querySelector("#quote-form-status");
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const FORM_API_BASE_URL = window.JAMI_FORM_CONFIG?.apiBaseUrl?.replace(/\/$/, "") || "";
+const quoteTurnstile = window.JamiForms?.renderTurnstile("#quote-turnstile", "quote") ?? Promise.resolve(null);
+
+if (quoteForm && quoteSubmit && quoteStatus) {
+  quoteForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!quoteForm.reportValidity()) return;
+
+    if (!FORM_API_BASE_URL || !window.JAMI_FORM_CONFIG?.turnstileSiteKey) {
+      quoteStatus.textContent = "Formulář ještě není připojený k backendu.";
+      quoteStatus.className = "quote-form-status is-error";
+      return;
+    }
+
+    const attachment = quoteForm.elements.attachment.files[0];
+    if (attachment && attachment.size > MAX_ATTACHMENT_SIZE) {
+      quoteStatus.textContent = "Příloha je větší než 10 MB. Nahrajte prosím menší soubor.";
+      quoteStatus.className = "quote-form-status is-error";
+      quoteForm.elements.attachment.focus();
+      return;
+    }
+
+    const originalButtonContent = quoteSubmit.innerHTML;
+    quoteSubmit.disabled = true;
+    quoteSubmit.textContent = "Odesílám...";
+    quoteStatus.textContent = "Poptávku právě odesíláme.";
+    quoteStatus.className = "quote-form-status";
+
+    const formData = new FormData(quoteForm);
+
+    try {
+      const response = await fetch(`${FORM_API_BASE_URL}/quote`, {
+        method: "POST",
+        body: formData
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Odeslání se nezdařilo");
+
+      quoteForm.reset();
+      quoteStatus.textContent = "Děkujeme. Poptávka byla odeslána a brzy se vám ozveme.";
+      quoteStatus.className = "quote-form-status is-success";
+    } catch (error) {
+      console.error("Quote submission failed", error);
+      quoteStatus.textContent = "Poptávku se nepodařilo odeslat. Zkuste to znovu nebo napište na info@jami-tech.cz.";
+      quoteStatus.className = "quote-form-status is-error";
+    } finally {
+      quoteSubmit.disabled = false;
+      quoteSubmit.innerHTML = originalButtonContent;
+      quoteTurnstile.then((widgetId) => window.JamiForms?.resetTurnstile(widgetId));
+    }
+  });
+}

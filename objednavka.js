@@ -50,10 +50,8 @@ const checkoutDeliveryPrice = document.querySelector("#checkout-delivery-price")
 const checkoutTotalPrice = document.querySelector("#checkout-total-price");
 const deliveryPrices = { kuryr: 129, osobne: 0 };
 const TERMS_VERSION = "v3.0";
-
-// Web3Forms Access Key ziskas zdarma na https://web3forms.com.
-// Cilovy e-mail se nastavuje v uctu Web3Forms k tomuto klici.
-const WEB3FORMS_ACCESS_KEY = "7f58dd82-3b2b-459b-9db5-b127616e9af9";
+const FORM_API_BASE_URL = window.JAMI_FORM_CONFIG?.apiBaseUrl?.replace(/\/$/, "") || "";
+const orderTurnstile = window.JamiForms?.renderTurnstile("#order-turnstile", "order") ?? Promise.resolve(null);
 
 function updateTotals() {
   if (!cart.length) { checkoutTotal.hidden = true; return; }
@@ -163,57 +161,26 @@ orderForm.addEventListener("submit", async (event) => {
 
   const delivery = orderForm.delivery.value;
   const payment = orderForm.payment.value;
-  const submittedAt = new Date().toISOString();
-  const orderList = groupCart(cart).map(({ product, qty }) => `- ${product.name}: ${qty} ks (${formatPrice(product.priceCents)} / ks)`).join("\n");
-  const lines = [
-    "Dobrý den, nová objednávka z e-shopu:",
-    "",
-    "Objednané položky:",
-    orderList,
-    "",
-    `Doprava: ${deliveryLabels[delivery]}`,
-    `Platba: ${paymentLabels[payment]}`,
-    `Celková cena: ${checkoutTotalPrice.textContent}`,
-    `Obchodní podmínky: potvrzeno (${TERMS_VERSION})`,
-    `Čas odeslání: ${submittedAt}`,
-    "",
-    "Kontaktní údaje zákazníka:",
-    `Jméno: ${orderForm.name.value}`,
-    `Telefon: ${orderForm.phone.value}`,
-    `E-mail: ${orderForm.email.value}`
-  ];
-  if (delivery === "kuryr") lines.push(`Adresa doručení: ${orderForm.address.value}`);
-  if (orderForm.note.value) lines.push(`Poznámka: ${orderForm.note.value}`);
+  if (!FORM_API_BASE_URL || !window.JAMI_FORM_CONFIG?.turnstileSiteKey) {
+    window.alert("Objednávkový formulář ještě není připojený k backendu.");
+    return;
+  }
 
   const originalBtnText = submitButton.innerHTML;
   submitButton.disabled = true;
   submitButton.innerHTML = "Odesílám objednávku...";
 
   try {
-    const response = await fetch("https://api.web3forms.com/submit", {
+    const formData = new FormData(orderForm);
+    formData.set("delivery", delivery);
+    formData.set("payment", payment);
+    formData.set("address", delivery === "kuryr" ? orderForm.address.value : "Osobní odběr");
+    formData.set("cart", JSON.stringify(groupCart(cart).map(({ product, qty }) => ({ id: product.id, qty }))));
+    formData.set("terms_version", TERMS_VERSION);
+
+    const response = await fetch(`${FORM_API_BASE_URL}/order`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        access_key: WEB3FORMS_ACCESS_KEY,
-        subject: `Nová objednávka z e-shopu - ${orderForm.name.value} (${checkoutTotalPrice.textContent})`,
-        from_name: "Jami-tech E-shop",
-        replyto: orderForm.email.value,
-        name: orderForm.name.value,
-        email: orderForm.email.value,
-        phone: orderForm.phone.value,
-        delivery: deliveryLabels[delivery],
-        payment: paymentLabels[payment],
-        total: checkoutTotalPrice.textContent,
-        address: delivery === "kuryr" ? orderForm.address.value : "Osobní odběr",
-        note: orderForm.note.value || "-",
-        terms_acknowledged: "Ano",
-        terms_version: TERMS_VERSION,
-        submitted_at: submittedAt,
-        message: lines.join("\n")
-      })
+      body: formData
     });
 
     const result = await response.json();
@@ -234,6 +201,8 @@ orderForm.addEventListener("submit", async (event) => {
     window.alert("Objednávku se nepodařilo automaticky odeslat. Zkuste to prosím znovu nebo nás kontaktujte na info@jami-tech.cz.");
     submitButton.disabled = false;
     submitButton.innerHTML = originalBtnText;
+  } finally {
+    orderTurnstile.then((widgetId) => window.JamiForms?.resetTurnstile(widgetId));
   }
 });
 

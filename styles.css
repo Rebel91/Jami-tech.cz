@@ -227,9 +227,6 @@ button.button, a.button, button.filter-button, button.add-to-cart, button.cart-b
 .facebook-button:hover { background: #166fe5; color: #fff !important; }
 .facebook-button span { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: #fff; color: #1877f2; font: 700 16px/1 Arial, sans-serif; }
 .footer-info { grid-column: 3; }
-.tally-embed { min-height: 760px; background: #101010; overflow: hidden; }
-.tally-embed { background: transparent; }
-.tally-embed iframe { display: block; width: 100%; min-height: 1000px; height: 1200px; border: 0; }
 .quote-panel { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
 .quote-copy { min-width: 0; text-align: left; }
 .quote-panel { padding-inline: 0; }
@@ -265,16 +262,48 @@ body { font-size: 14px; }
 .hero, .section-block, .portfolio-section, .shop-preview, .quote-section, .contact-section { padding-block: var(--section-gap); }
 .shop-preview { display: block; }
 .shop-preview-button { display: inline-flex; margin-top: 24px; }
-.tally-embed { min-height: 0; }
-.tally-embed iframe { min-height: 0; height: 760px; }
 .form-privacy-note { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
 .form-privacy-note a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.quote-form-wrap { min-width: 0; }
+.quote-form { padding: clamp(24px, 4vw, 42px); border: 1px solid rgba(245, 255, 250, .18); border-radius: 8px; background: #101010; }
+.quote-form-heading { margin-bottom: 30px; }
+.quote-form-heading .eyebrow { margin-bottom: 12px; font-size: 12px; }
+.quote-form-heading h2 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0; }
+.quote-form-heading > p:last-child { max-width: 540px; margin: 14px 0 0; color: #b9c1bc; font-size: 15px; }
+.quote-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.quote-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; color: #d0d5d0; font-size: 13px; font-weight: 600; }
+.quote-field-full { grid-column: 1 / -1; }
+.quote-field input, .quote-field select, .quote-field textarea { width: 100%; border: 1px solid rgba(245, 255, 250, .28); border-radius: 4px; padding: 12px 13px; background: #1c1c1c; color: var(--ink); font: 400 15px var(--body); }
+.quote-field textarea { min-height: 140px; resize: vertical; }
+.quote-field input::placeholder, .quote-field textarea::placeholder { color: #7d8983; opacity: 1; }
+.quote-field input:focus, .quote-field select:focus, .quote-field textarea:focus { border-color: var(--accent); outline: 2px solid transparent; box-shadow: 0 0 0 2px rgba(217, 240, 91, .24); }
+.quote-file input { padding: 10px; }
+.quote-file input::file-selector-button { margin-right: 12px; border: 0; border-radius: 4px; padding: 8px 12px; background: #374151; color: #fff; font: 600 12px var(--body); cursor: pointer; }
+.quote-file small { color: #89968f; font-size: 11px; font-weight: 400; }
+.quote-consent { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; color: #b9c1bc; font-size: 12px; }
+.quote-consent input { flex: 0 0 auto; margin-top: 3px; accent-color: var(--accent); }
+.quote-consent a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.quote-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.turnstile-slot { min-height: 65px; margin-top: 20px; overflow: hidden; }
+.turnstile-slot:empty { display: none; }
+.quote-form-status { min-height: 22px; margin: 15px 0 0; color: #b9c1bc; font-size: 13px; }
+.quote-form-status.is-success { color: var(--accent); }
+.quote-form-status.is-error { color: #ff8b73; }
+.quote-submit { min-width: 190px; margin-top: 8px; background: #c72c2c !important; color: #fff !important; }
+.quote-submit:disabled { cursor: wait; opacity: .65; transform: none; }
 @media (max-width: 850px) {
   :root { --section-gap: 78px; }
   .section-shell, .site-header { padding-inline: 18px; }
   .shop-preview-button { margin-top: 24px; }
-  .tally-embed iframe { height: 900px; }
   .footer-bottom-logo { display: block; margin: 12px 0 0 auto; }
+  .quote-form-grid { grid-template-columns: 1fr; }
+  .quote-field-full { grid-column: auto; }
+}
+@media (max-width: 520px) {
+  .quote-panel { padding-inline: 0; }
+  .quote-form { padding: 20px; }
+  .quote-panel .quote-form-heading h2 { font-size: clamp(21px, 8vw, 28px); overflow-wrap: anywhere; }
+  .quote-submit { width: 100%; min-width: 0; }
 }
 .section-heading h2, .quote-panel h2, .shop-preview h2, .contact-section h2 { font-size: 40px; }
 .shop-page .button, .shop-page .add-to-cart, .shop-page .filter-button.is-active, .shop-page .filter-button:hover, .shop-page #send-order { background: #c72c2c !important; color: #fff !important; border-color: #c72c2c !important; }
