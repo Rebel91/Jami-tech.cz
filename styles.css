@@ -190,7 +190,9 @@ body { font-size: 16px; }
 .portfolio-image-button, .product-image-button { width: 100%; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: zoom-in; }
 .portfolio-image-button { height: 100%; }
 .product-image-button { height: auto; aspect-ratio: 1 / 1; }
-.portfolio-image-button:focus-visible, .product-image-button:focus-visible, .portfolio-arrow:focus-visible, .image-lightbox button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.portfolio-image-button:focus-visible, .portfolio-arrow:focus-visible, .image-lightbox button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.product-image-button:focus { outline: none; }
+.product-image-button:focus-visible img { filter: brightness(.95); }
 .portfolio-placeholder { border-radius: 8px; }
 .portfolio-placeholder img, .product-image img { cursor: zoom-in; }
 .lightbox-open { overflow: hidden; }
