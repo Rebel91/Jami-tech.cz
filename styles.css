@@ -332,6 +332,8 @@ body { font-size: 14px; }
 .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .product-card, .service-card, .order-form, .order-field, .checkout-summary { min-width: 0; }
 .order-field input, .order-field textarea { width: 100%; min-width: 0; }
+.order-fieldset input[type="radio"] { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; padding: 0; accent-color: #c72c2c; }
+.order-fieldset label { min-height: 36px; gap: 10px; line-height: 1.5; cursor: pointer; }
 .order-fieldset { min-inline-size: 0; }
 .shop-preview-content { width: auto; max-width: 100%; }
 .footer-contact, .footer-bottom .footer-legal { flex-wrap: wrap; white-space: normal !important; }

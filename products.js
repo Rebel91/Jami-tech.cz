@@ -28,7 +28,7 @@ const products = [
   {
     id: "lithophane",
     name: "Obrázek Lithophane",
-    description: "Vaše fotografie v klasickém rámečku s moderním podsvícením. Osobní dárek, který rozzáří vzpomínky.",
+    description: "Vaše fotografie v klasickém rámečku s moderním podsvícením. Osobní dárek, který rozzáří vzpomínky. O podsvícení se stará LED pásek s napájením 5 V přes USB-C.",
     image: "pictures/produkty/lithophane/cerna.jpg",
     imageWidth: 1200,
     imageHeight: 900,
