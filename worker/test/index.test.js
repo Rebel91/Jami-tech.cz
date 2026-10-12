@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { File } from "node:buffer";
 import test from "node:test";
 import worker from "../src/index.js";
-import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline, sendEmailWithRetry } from "../src/index.js";
+import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline, sendEmailWithRetry, validateOrderPhoto } from "../src/index.js";
 
 test("vygeneruje referenci z českého data a náhodného identifikátoru", () => {
   const reference = generateReference("P", new Date("2026-09-15T12:00:00Z"), () => "a7c3f2b1-0000-4000-8000-000000000000");
@@ -156,4 +156,23 @@ test("přijatá poptávka zůstává úspěšná při výpadku potvrzovacího e-
     assert.equal(result.confirmationSent, false);
     assert.match(result.reference, /^P-/);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+
+test("lithophane bez stanovené ceny nelze objednat ani s podvrženou cenou", () => {
+  const data = new FormData();
+  for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"lithophane-120x90-cerna","qty":1,"priceCents":1}]', terms_version: "v3.0", terms: "on" })) data.set(key, value);
+  assert.throws(() => buildOrder(data), /Cena této varianty/);
+  data.set("cart", '[{"id":"lithophane-120x90-ruzova","qty":1}]');
+  assert.throws(() => buildOrder(data), /neplatnou položku/);
+});
+
+test("fotografie objednávky přijímá jen obrazové formáty a kontroluje jejich obsah", async () => {
+  const png = new File([new Uint8Array([137,80,78,71,13,10,26,10])], "foto.png");
+  assert.equal((await validateOrderPhoto(png)).content_type, "image/png");
+  const webp = new File([new Uint8Array([82,73,70,70,0,0,0,0,87,69,66,80])], "foto.webp");
+  assert.equal((await validateOrderPhoto(webp)).content_type, "image/webp");
+  await assert.rejects(validateOrderPhoto(new File(["%PDF-1.0"], "foto.pdf")), /JPG, PNG nebo WebP/);
+  await assert.rejects(validateOrderPhoto(new File(["není obrázek"], "foto.jpg")), /neodpovídá/);
+  await assert.rejects(validateOrderPhoto(new File([new Uint8Array(10 * 1024 * 1024 + 1)], "foto.png")), /větší než 10 MB/);
 });

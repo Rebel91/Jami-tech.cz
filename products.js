@@ -25,6 +25,24 @@ const products = [
     category: "prislusenstvi"
   },
 
+  {
+    id: "lithophane",
+    name: "Obrázek Lithophane",
+    description: "Vaše fotografie v klasickém rámečku s moderním podsvícením. Osobní dárek, který rozzáří vzpomínky.",
+    image: "pictures/produkty/lithophane/cerna.jpg",
+    imageWidth: 1200,
+    imageHeight: 900,
+    category: "vyrobky",
+    sizes: ["120x90", "160x120"],
+    // Ceny v haléřích doplňte také v worker/src/products.js. null = zatím nelze objednat.
+    prices: { "120x90": null, "160x120": null },
+    colors: [
+      { id: "cerna", label: "Černá", image: "pictures/produkty/lithophane/cerna.jpg" },
+      { id: "cerna-trpytky", label: "Černá se třpytkami", image: "pictures/produkty/lithophane/cerna-trpytky.jpg" },
+      { id: "svetle-modra", label: "Světle modrá", image: "pictures/produkty/lithophane/svetle-modra.jpg" }
+    ]
+  },
+
   // Zkopíruj tento blok pro další produkt a uprav jeho údaje.
   // {
   //   id: "jedinecne-id-produktu",
@@ -37,3 +55,18 @@ const products = [
   //   category: "vyrobky"
   // }
 ];
+
+
+function resolveProduct(id) {
+  const direct = products.find((product) => product.id === id);
+  if (direct) return direct;
+  const base = products.find((product) => product.id === "lithophane");
+  for (const size of base.sizes) {
+    for (const color of base.colors) {
+      if (id === `${base.id}-${size}-${color.id}`) {
+        return { ...base, id, name: `${base.name} — ${size.replace("x", " × ")} mm, ${color.label}`, priceCents: base.prices[size], image: color.image, requiresPhoto: true };
+      }
+    }
+  }
+  return null;
+}

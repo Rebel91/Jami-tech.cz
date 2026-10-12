@@ -27,10 +27,10 @@ function readCart() {
     const savedCart = JSON.parse(localStorage.getItem("jami-cart") || "[]");
     if (!Array.isArray(savedCart)) return [];
     return savedCart.flatMap((savedItem) => {
-      const product = products.find((item) => item.id === savedItem.id)
+      const product = resolveProduct(savedItem.id)
         || products.find((item) => item.name === savedItem.name);
       const quantity = Number.isInteger(savedItem.qty) ? Math.max(0, savedItem.qty) : 1;
-      return product ? Array(quantity).fill(product) : [];
+      return product && Number.isInteger(product.priceCents) ? Array(Math.min(99, quantity)).fill(product) : [];
     });
   } catch {
     return [];
@@ -52,7 +52,17 @@ function renderProducts() {
   emptyProducts.hidden = visibleProducts.length > 0;
   productGrid.innerHTML = visibleProducts.map((product) => {
     const index = products.indexOf(product);
-    return `<article class="product-card"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p><div class="product-meta"><span class="product-price">${formatPrice(product.priceCents)}</span><button class="add-to-cart" data-index="${index}" type="button">PŘIDAT</button></div></div></article>`;
+    const options = product.sizes ? `<div class="product-options">
+      <label>Velikost fotografie<select data-option="size">${product.sizes.map(size => `<option value="${size}">${size.replace("x", " × ")} mm</option>`).join("")}</select></label>
+      <label>Barva rámečku<select data-option="color">${product.colors.map(color => `<option value="${color.id}">${color.label}</option>`).join("")}</select></label>
+      <label>Vaše fotografie<input type="file" data-photo accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"></label>
+      <small>JPG, PNG nebo WebP, maximálně 10 MB. Fotografie se odešle až s objednávkou.</small>
+      <p class="product-photo-status" role="status" aria-live="polite"></p>
+      <small>Ilustrační náhled produktu. Cenu doplníme před zahájením prodeje.</small>
+    </div>` : "";
+    const initial = product.sizes ? resolveProduct(`${product.id}-${product.sizes[0]}-${product.colors[0].id}`) : product;
+    const available = Number.isInteger(initial.priceCents);
+    return `<article class="product-card${product.sizes ? " product-card-configurable" : ""}" data-product-id="${product.id}"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p>${options}<div class="product-meta"><span class="product-price">${available ? formatPrice(initial.priceCents) : "Cena bude doplněna"}</span><button class="add-to-cart" data-index="${index}" type="button" ${available ? "" : "disabled"}>PŘIDAT</button></div></div></article>`;
   }).join("");
   productGrid.querySelectorAll(".product-image img").forEach((image) => {
     image.addEventListener("error", () => {
@@ -61,6 +71,36 @@ function renderProducts() {
     });
   });
 }
+
+
+function selectedProduct(card) {
+  const product = products.find(item => item.id === card.dataset.productId);
+  return product.sizes ? resolveProduct(`${product.id}-${card.querySelector('[data-option="size"]').value}-${card.querySelector('[data-option="color"]').value}`) : product;
+}
+
+productGrid.addEventListener("change", async (event) => {
+  const card = event.target.closest(".product-card-configurable");
+  if (!card) return;
+  const product = selectedProduct(card);
+  const status = card.querySelector(".product-photo-status");
+  const upload = card.querySelector("[data-photo]");
+  const image = card.querySelector(".product-image img");
+  image.src = product.image;
+  image.alt = product.name;
+  image.hidden = false;
+  image.nextElementSibling.hidden = true;
+  card.querySelector(".product-image-button").setAttribute("aria-label", `Zvětšit obrázek produktu ${product.name}`);
+  card.querySelector(".product-price").textContent = Number.isInteger(product.priceCents) ? formatPrice(product.priceCents) : "Cena bude doplněna";
+  card.querySelector(".add-to-cart").disabled = true;
+  try {
+    if (event.target.matches("[data-photo]") && upload.files[0]) {
+      await window.JamiPhotos.save(product.id, upload.files[0]);
+    } else if (event.target.matches("[data-option]")) { upload.value = ""; }
+    const photo = await window.JamiPhotos.get(product.id);
+    if (selectedProduct(card).id === product.id) status.textContent = photo ? `Fotografie uložená v tomto prohlížeči: ${photo.name}` : "";
+  } catch (error) { status.textContent = error.message; upload.value = ""; }
+  finally { card.querySelector(".add-to-cart").disabled = !Number.isInteger(selectedProduct(card).priceCents); }
+});
 
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -93,7 +133,7 @@ function renderCart() {
 }
 
 function setQuantity(id, qty) {
-  const product = products.find((item) => item.id === id);
+  const product = resolveProduct(id);
   if (!product) return;
   state.cart = state.cart.filter((item) => item.id !== id);
   for (let i = 0; i < qty; i += 1) state.cart.push(product);
@@ -155,7 +195,19 @@ document.addEventListener("click", (event) => {
     document.addEventListener("keydown", handleKeydown);
     overlay.querySelector(".image-lightbox-close").focus();
   }
-  if (addButton) { state.cart.push(products[Number(addButton.dataset.index)]); renderCart(); setDrawer(true); }
+  if (addButton && !addButton.disabled) {
+    const card = addButton.closest(".product-card");
+    const product = selectedProduct(card);
+    if (!Number.isInteger(product.priceCents)) return;
+    if (product.requiresPhoto) {
+      addButton.disabled = true;
+      window.JamiPhotos.get(product.id).then((file) => {
+        if (!file) throw new Error("Nejdříve nahrajte fotografii pro vybranou variantu.");
+        state.cart.push(product); renderCart(); setDrawer(true);
+      }).catch(error => { card.querySelector(".product-photo-status").textContent = error.message; })
+        .finally(() => { addButton.disabled = false; });
+    } else { state.cart.push(product); renderCart(); setDrawer(true); }
+  }
   if (removeButton) { state.cart = state.cart.filter((product) => product.id !== removeButton.dataset.cartId); renderCart(); }
   if (qtyButton) {
     const id = qtyButton.dataset.cartId;

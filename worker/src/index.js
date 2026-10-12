@@ -77,6 +77,20 @@ export default {
       const payload = pathname === "/quote"
         ? await buildQuote(formData, reference)
         : buildOrder(formData, reference);
+      if (pathname === "/order") {
+        const cart = parseCart(text(formData, "cart"));
+        let photoBytes = 0;
+        for (const { product, id } of cart) {
+          if (!product.requiresPhoto) continue;
+          const photo = formData.get(`photo-${id}`);
+          if (!(photo instanceof File) || !photo.size) throw new FormError(`Nahrajte fotografii pro ${product.name}.`);
+          photoBytes += photo.size;
+          if (photoBytes > MAX_ATTACHMENT_SIZE) throw new FormError("Fotografie v objednávce mohou mít dohromady nejvýše 10 MB.", 413);
+          const attachment = await validateOrderPhoto(photo);
+          attachment.filename = `${id}-${attachment.filename}`;
+          payload.attachments.push(attachment);
+        }
+      }
       const emailResponse = await sendEmailWithRetry(payload, env);
 
       if (!emailResponse.ok) {
@@ -257,8 +271,9 @@ function parseCart(value) {
   return cart.map((item) => {
     const product = item && PRODUCTS[item.id];
     const qty = Number(item?.qty);
+    if (product && !Number.isInteger(product.priceCents)) throw new FormError("Cena této varianty ještě není stanovená. Produkt zatím nelze objednat.");
     if (!product || !Number.isInteger(qty) || qty < 1 || qty > 99) throw new FormError("Košík obsahuje neplatnou položku.");
-    return { product, qty };
+    return { product, qty, id: item.id };
   });
 }
 
@@ -266,11 +281,17 @@ function formatPrice(priceCents) {
   return `${new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 2 }).format(priceCents / 100)} Kč`;
 }
 
-async function validateAttachment(file) {
+export async function validateOrderPhoto(file) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (!["jpg", "jpeg", "png", "webp"].includes(extension)) throw new FormError("Fotografie musí být JPG, PNG nebo WebP.");
+  return validateAttachment(file, new Set(["jpg", "jpeg", "png", "webp"]));
+}
+
+async function validateAttachment(file, allowedExtensions = ALLOWED_EXTENSIONS) {
   if (file.size > MAX_ATTACHMENT_SIZE) throw new FormError("Příloha je větší než 10 MB.", 413);
   const filename = sanitizeFilename(file.name);
   const extension = filename.split(".").pop()?.toLowerCase();
-  if (!extension || !ALLOWED_EXTENSIONS.has(extension)) throw new FormError("Tento typ přílohy není povolen.");
+  if (!extension || !allowedExtensions.has(extension)) throw new FormError("Tento typ přílohy není povolen.");
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!matchesFileSignature(extension, bytes)) throw new FormError("Obsah přílohy neodpovídá jejímu typu.");
@@ -286,6 +307,7 @@ export function matchesFileSignature(extension, bytes) {
   const startsWith = (...values) => values.every((value, index) => bytes[index] === value);
   if (extension === "jpg" || extension === "jpeg") return startsWith(0xff, 0xd8, 0xff);
   if (extension === "png") return startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+  if (extension === "webp") return startsWith(0x52, 0x49, 0x46, 0x46) && new TextDecoder().decode(bytes.slice(8, 12)) === "WEBP";
   if (extension === "pdf") return startsWith(0x25, 0x50, 0x44, 0x46, 0x2d);
   if (extension === "3mf") {
     if (!startsWith(0x50, 0x4b, 0x03, 0x04)) return false;
@@ -309,7 +331,7 @@ function decodePrefix(bytes) {
 }
 
 function contentTypeFor(extension) {
-  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", pdf: "application/pdf", "3mf": "application/vnd.ms-package.3dmanufacturing-3dmodel+xml", stl: "model/stl", obj: "model/obj", step: "model/step", stp: "model/step" })[extension];
+  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", pdf: "application/pdf", "3mf": "application/vnd.ms-package.3dmanufacturing-3dmodel+xml", stl: "model/stl", obj: "model/obj", step: "model/step", stp: "model/step" })[extension];
 }
 
 function readFields(formData, names) {

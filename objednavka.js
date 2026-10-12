@@ -25,10 +25,10 @@ function readCart() {
     const savedCart = JSON.parse(localStorage.getItem("jami-cart") || "[]");
     if (!Array.isArray(savedCart)) return [];
     return savedCart.flatMap((savedItem) => {
-      const product = products.find((item) => item.id === savedItem.id)
+      const product = resolveProduct(savedItem.id)
         || products.find((item) => item.name === savedItem.name);
       const quantity = Number.isInteger(savedItem.qty) ? Math.max(0, savedItem.qty) : 1;
-      return product ? Array(quantity).fill(product) : [];
+      return product && Number.isInteger(product.priceCents) ? Array(Math.min(99, quantity)).fill(product) : [];
     });
   } catch {
     return [];
@@ -89,7 +89,7 @@ function renderSummary() {
 }
 
 function setQuantity(id, qty) {
-  const product = products.find((item) => item.id === id);
+  const product = resolveProduct(id);
   if (!product) return;
   const remaining = cart.filter((item) => item.id !== id);
   cart.length = 0;
@@ -181,6 +181,13 @@ orderForm.addEventListener("submit", async (event) => {
 
   try {
     const formData = new FormData(orderForm);
+    for (const { product } of groupCart(cart)) {
+      if (!product.requiresPhoto) continue;
+      const photo = await window.JamiPhotos.get(product.id);
+      if (!photo) throw new Error(`Chybí fotografie pro ${product.name}. Vraťte se do e-shopu a nahrajte ji.`);
+      await window.JamiPhotos.validate(photo);
+      formData.set(`photo-${product.id}`, photo);
+    }
     formData.set("delivery", delivery);
     formData.set("payment", payment);
     formData.set("address", delivery === "kuryr" ? orderForm.address.value : "Osobní odběr");
@@ -195,6 +202,9 @@ orderForm.addEventListener("submit", async (event) => {
     const result = await response.json();
 
     if (response.status === 200 && result.success && result.reference) {
+      for (const { product } of groupCart(cart)) {
+        if (product.requiresPhoto) window.JamiPhotos.remove(product.id).catch(() => {});
+      }
       localStorage.removeItem("jami-cart");
       cart.length = 0;
       if (checkoutLayout) checkoutLayout.hidden = true;

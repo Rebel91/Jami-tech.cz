@@ -131,3 +131,11 @@ E-shop zobrazuje produktové fotografie ve čtvercových kartách a obdélníkov
 Sekce `#lithophane` následuje na hlavní stránce po službách. Fotografie je vlevo, text vpravo; na mobilu jsou pod sebou. Připravený rámeček je dočasný zástupný vizuál.
 
 Do `pictures/lithophane/01.webp` vlož fotografii (doporučeno 1200 × 1200 px). V `index.html` odkomentuj připravený `<img>` uvnitř `.lithophane-image`; zástupný rámeček se automaticky skryje. Podle skutečné fotografie uprav `alt` a rozměry.
+
+## Lithophane v e-shopu
+
+Produkt nabízí velikosti 120 × 90 mm a 160 × 120 mm a rámečky černý, černý se třpytkami a světle modrý. Ceny jsou zatím `null`: zákazník vidí „Cena bude doplněna“ a nemůže produkt přidat do košíku. Pro zahájení prodeje doplň ceny v haléřích pro každou velikost v `products.js` i `worker/src/products.js` a nasaď Worker i web.
+
+Volba barvy přepíná produktový náhled. Ilustrační fotografie jsou v `pictures/produkty/lithophane/cerna.jpg`, `cerna-trpytky.jpg` a `svetle-modra.jpg`. Později je nahraď skutečnými fotografiemi výrobku. Náhledy byly vytvořené vestavěným ImageGen: studiový snímek na bílém pozadí, jednoduchý klasický 3D tištěný rámeček s teple podsvícenou lithophane horskou krajinou a jezerem, bez textu a loga; barevné editace mění pouze povrch rámečku na černou s jemnými stříbrnými třpytkami nebo světle modrou a zachovávají geometrii, fotografii, světlo a pozadí.
+
+Vlastní fotografie zákazníka: JPG, PNG nebo WebP, maximálně 10 MB. `photo-upload.js` kontroluje příponu i signaturu a uchovává soubor v IndexedDB pouze v daném prohlížeči pro konkrétní variantu. Po doplnění cen se soubor připojí k objednávce a po jejím přijetí se místní kopie smaže. Server kontroluje obrazový formát znovu; souhrnný limit fotografií v jedné objednávce je 10 MB. Každá kombinace velikosti a barvy má vlastní ID, takže se v košíku, souhrnu a e-mailech neztrácí zvolená varianta. Pro různé fotografie u stejné varianty zatím vytvoř samostatné objednávky.
