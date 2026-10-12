@@ -125,3 +125,9 @@ E-shop zobrazuje produktové fotografie ve čtvercových kartách a obdélníkov
 - `objednavka.html` a `objednavka.js` - objednávkový formulář
 - `pictures/` - logo, produktové fotografie a portfolio
 - `legal/` - právní informace
+
+## Fotografie Lithophane
+
+Sekce `#lithophane` následuje na hlavní stránce po službách. Fotografie je vlevo, text vpravo; na mobilu jsou pod sebou. Připravený rámeček je dočasný zástupný vizuál.
+
+Do `pictures/lithophane/01.webp` vlož fotografii (doporučeno 1200 × 1200 px). V `index.html` odkomentuj připravený `<img>` uvnitř `.lithophane-image`; zástupný rámeček se automaticky skryje. Podle skutečné fotografie uprav `alt` a rozměry.
