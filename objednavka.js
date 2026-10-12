@@ -51,7 +51,11 @@ const checkoutTotalPrice = document.querySelector("#checkout-total-price");
 const deliveryPrices = { kuryr: 129, osobne: 0 };
 const TERMS_VERSION = "v3.0";
 const FORM_API_BASE_URL = window.JAMI_FORM_CONFIG?.apiBaseUrl?.replace(/\/$/, "") || "";
-const orderTurnstile = window.JamiForms?.renderTurnstile("#order-turnstile", "order") ?? Promise.resolve(null);
+const orderTurnstile = (window.JamiForms?.renderTurnstile("#order-turnstile", "order") ?? Promise.resolve(null))
+  .catch(() => {
+    document.querySelector("#order-turnstile").textContent = "Ověření proti robotům se nepodařilo načíst. Obnovte stránku nebo nás kontaktujte na info@jami-tech.cz.";
+    return null;
+  });
 
 function updateTotals() {
   if (!cart.length) { checkoutTotal.hidden = true; return; }
@@ -166,6 +170,11 @@ orderForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (!window.JamiForms.hasVerification(orderForm)) {
+    window.alert("Ověření proti robotům ještě není dokončené. Vyčkejte prosím, případně obnovte stránku.");
+    return;
+  }
+
   const originalBtnText = submitButton.innerHTML;
   submitButton.disabled = true;
   submitButton.innerHTML = "Odesílám objednávku...";
@@ -185,7 +194,7 @@ orderForm.addEventListener("submit", async (event) => {
 
     const result = await response.json();
 
-    if (response.status === 200 && result.success) {
+    if (response.status === 200 && result.success && result.reference) {
       localStorage.removeItem("jami-cart");
       cart.length = 0;
       if (checkoutLayout) checkoutLayout.hidden = true;

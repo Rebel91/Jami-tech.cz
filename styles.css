@@ -56,6 +56,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { overflow-x: hidden; scroll-behavior: smooth; }
 body { min-width: 0; margin: 0; overflow-x: hidden; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
 a { color: inherit; text-decoration: none; }
@@ -318,4 +319,49 @@ body { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Obrázek nesmí svou přirozenou velikostí deformovat čtvercovou kartu. */
+.product-image, .portfolio-placeholder { display: block; position: relative; overflow: hidden; }
+.product-image { width: 100%; min-width: 0; aspect-ratio: 1; }
+.product-image img, .portfolio-placeholder img { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; object-fit: cover; }
+.product-image-fallback { position: absolute; inset: 0; padding: 20px; align-content: center; }
+.service-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.product-card, .service-card, .order-form, .order-field, .checkout-summary { min-width: 0; }
+.order-field input, .order-field textarea { width: 100%; min-width: 0; }
+.order-fieldset { min-inline-size: 0; }
+.shop-preview-content { width: auto; max-width: 100%; }
+.footer-contact, .footer-bottom .footer-legal { flex-wrap: wrap; white-space: normal !important; }
+.footer-info { min-width: 0; }
+.contact-details a, .footer-contact a, .cart-item strong { overflow-wrap: anywhere; }
+.cart-item > div:first-child { min-width: 0; }
+.qty-control { flex-shrink: 0; }
+:root { --muted: #a8b3ad; }
+@media (max-width: 1100px) and (min-width: 851px) {
+  .site-header { gap: 18px; padding-inline: 24px; }
+  .main-nav { gap: 16px; font-size: 14px; }
+  .header-contact { font-size: 14px; }
+}
+@media (max-width: 850px) {
+  .service-grid, .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-info { grid-column: auto; }
+  .shop-page h1, .shop-page .shop-hero h1, .checkout-page h1, .legal-page h1 { font-size: clamp(36px, 7vw, 56px); overflow-wrap: anywhere; }
+  .quote-field input, .quote-field select, .quote-field textarea, .order-field input, .order-field textarea { font-size: 16px; }
+  .legal-page h2 { font-size: 30px; overflow-wrap: anywhere; }
+}
+@media (max-width: 520px) {
+  .service-grid, .product-grid { grid-template-columns: minmax(0, 1fr); }
+  .service-card { display: flex; flex-direction: column; min-height: 330px; }
+  .service-icon { margin-bottom: 40px; }
+  .card-link { position: static; margin-top: auto; }
+  .section-heading h2, .quote-panel h2, .shop-preview h2, .contact-section h2 { font-size: clamp(28px, 8vw, 40px); }
+  .quote-panel .quote-form-heading h2 { font-size: clamp(21px, 8vw, 28px); }
+  .hero-intro, .hero-intro-secondary { font-size: 20px; }
+  .checkout-summary { padding: 20px; }
+  .checkout-items .cart-item, .cart-items .cart-item { flex-wrap: wrap; }
+  .turnstile-slot { overflow: visible; }
+  .nav-toggle, .qty-btn, .remove-item, .close-cart { min-width: 44px; min-height: 44px; }
+  .site-header { gap: 12px; }
+  .site-header .cart-button { padding: 12px; gap: 8px; font-size: 14px; }
 }

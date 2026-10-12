@@ -9,7 +9,15 @@ window.JamiForms = {
     if (!siteKey) return Promise.resolve(null);
 
     return new Promise((resolve, reject) => {
-      const render = () => resolve(window.turnstile.render(container, { sitekey: siteKey, action, size: "flexible" }));
+      const render = () => {
+        try {
+          const slot = document.querySelector(container);
+          resolve(window.turnstile.render(container, {
+            sitekey: siteKey, action, language: "cs",
+            size: slot && slot.clientWidth < 300 ? "compact" : "flexible"
+          }));
+        } catch (error) { reject(error); }
+      };
       if (window.turnstile) {
         render();
         return;
@@ -31,6 +39,10 @@ window.JamiForms = {
       script.addEventListener("error", reject, { once: true });
       document.head.append(script);
     });
+  },
+
+  hasVerification(form) {
+    return Boolean(new FormData(form).get("cf-turnstile-response")?.trim());
   },
 
   resetTurnstile(widgetId) {

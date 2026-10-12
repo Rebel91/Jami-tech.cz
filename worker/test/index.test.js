@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { File } from "node:buffer";
 import test from "node:test";
+import worker from "../src/index.js";
 import { buildOrder, buildQuote, generateReference, getCorsHeaders, matchesFileSignature, minimumDeadline, sendEmailWithRetry } from "../src/index.js";
 
 test("vygeneruje referenci z českého data a náhodného identifikátoru", () => {
@@ -115,4 +116,44 @@ test("zopakuje pouze dočasně odmítnutý e-mail", async () => {
   const rejected = await sendEmailWithRetry({}, {}, permanentFailure);
   assert.equal(rejected.status, 400);
   assert.equal(attempts, 1);
+});
+
+
+test("endpoint odmítá chybějící token, cizí hostname a nesprávnou akci", async () => {
+  const originalFetch = globalThis.fetch;
+  const env = { ALLOWED_ORIGINS: "https://jami-tech.cz", EXPECTED_HOSTNAME: "jami-tech.cz,www.jami-tech.cz", TURNSTILE_SECRET_KEY: "test", RESEND_API_KEY: "test", MAIL_FROM: "test@example.com", MAIL_TO: "owner@example.com" };
+  try {
+    for (const verification of [null, { success: false }, { success: true, action: "order", hostname: "jami-tech.cz" }, { success: true, action: "quote", hostname: "attacker.example" }]) {
+      let calls = 0;
+      globalThis.fetch = async () => { calls++; return Response.json(verification); };
+      const data = new FormData();
+      if (verification) data.set("cf-turnstile-response", "token");
+      const response = await worker.fetch(new Request("https://forms.jami-tech.cz/quote", { method: "POST", headers: { Origin: "https://jami-tech.cz" }, body: data }), env);
+      assert.equal(response.status, 400);
+      assert.equal((await response.json()).success, false);
+      assert.equal(calls, verification ? 1 : 0);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("přijatá poptávka zůstává úspěšná při výpadku potvrzovacího e-mailu", async () => {
+  const originalFetch = globalThis.fetch;
+  const env = { ALLOWED_ORIGINS: "https://www.jami-tech.cz", EXPECTED_HOSTNAME: "jami-tech.cz,www.jami-tech.cz", TURNSTILE_SECRET_KEY: "test", RESEND_API_KEY: "test", MAIL_FROM: "test@example.com", MAIL_TO: "owner@example.com" };
+  try {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls++;
+      if (calls === 1) return Response.json({ success: true, action: "quote", hostname: "www.jami-tech.cz" });
+      if (calls === 2) return Response.json({ id: "internal" });
+      throw new Error("Network unavailable");
+    };
+    const data = new FormData();
+    for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", message: "Test", privacy: "on", "cf-turnstile-response": "token" })) data.set(key, value);
+    const response = await worker.fetch(new Request("https://forms.jami-tech.cz/quote", { method: "POST", headers: { Origin: "https://www.jami-tech.cz" }, body: data }), env);
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.confirmationSent, false);
+    assert.match(result.reference, /^P-/);
+  } finally { globalThis.fetch = originalFetch; }
 });

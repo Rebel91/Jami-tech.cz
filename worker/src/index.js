@@ -60,7 +60,7 @@ export default {
       }
 
       const formData = await request.formData();
-      if (text(formData, "botcheck")) return json({ success: true }, 200, corsHeaders);
+      if (text(formData, "botcheck")) return json({ success: false, message: "Ověření proti spamu selhalo." }, 400, corsHeaders);
 
       const turnstile = await verifyTurnstile(
         text(formData, "cf-turnstile-response"),
@@ -69,7 +69,7 @@ export default {
       );
       if (!turnstile.success
         || turnstile.action !== pathname.slice(1)
-        || turnstile.hostname !== env.EXPECTED_HOSTNAME) {
+        || !env.EXPECTED_HOSTNAME.split(",").map((host) => host.trim()).includes(turnstile.hostname)) {
         return json({ success: false, message: "Ověření proti spamu selhalo. Obnovte stránku a zkuste to znovu." }, 400, corsHeaders);
       }
 
@@ -84,10 +84,14 @@ export default {
         return json({ success: false, message: "E-mail se nepodařilo odeslat." }, 502, corsHeaders);
       }
 
-      const confirmationResponse = await sendEmailWithRetry(payload.confirmation, env);
-      const confirmationSent = confirmationResponse.ok;
-      if (!confirmationResponse.ok) {
-        console.error("Resend confirmation failed", confirmationResponse.status, await confirmationResponse.text());
+      let confirmationSent = false;
+      try {
+        const confirmationResponse = await sendEmailWithRetry(payload.confirmation, env);
+        confirmationSent = confirmationResponse.ok;
+        if (!confirmationSent) console.error("Resend confirmation failed", confirmationResponse.status);
+      } catch {
+        // Interní zpráva už byla přijata: klient nesmí opakovat objednávku.
+        console.error("Resend confirmation unavailable");
       }
 
       return json({ success: true, reference, confirmationSent }, 200, corsHeaders);

@@ -142,7 +142,11 @@ const quoteSubmit = document.querySelector("#quote-submit");
 const quoteStatus = document.querySelector("#quote-form-status");
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 const FORM_API_BASE_URL = window.JAMI_FORM_CONFIG?.apiBaseUrl?.replace(/\/$/, "") || "";
-const quoteTurnstile = window.JamiForms?.renderTurnstile("#quote-turnstile", "quote") ?? Promise.resolve(null);
+const quoteTurnstile = (window.JamiForms?.renderTurnstile("#quote-turnstile", "quote") ?? Promise.resolve(null))
+  .catch(() => {
+    document.querySelector("#quote-turnstile").textContent = "Ověření proti robotům se nepodařilo načíst. Obnovte stránku nebo nás kontaktujte na info@jami-tech.cz.";
+    return null;
+  });
 
 if (quoteForm && quoteSubmit && quoteStatus) {
   const deadlineInput = quoteForm.elements.deadline;
@@ -169,6 +173,12 @@ if (quoteForm && quoteSubmit && quoteStatus) {
       return;
     }
 
+    if (!window.JamiForms.hasVerification(quoteForm)) {
+      quoteStatus.textContent = "Ověření proti robotům ještě není dokončené. Vyčkejte prosím, případně obnovte stránku.";
+      quoteStatus.className = "quote-form-status is-error";
+      return;
+    }
+
     const attachment = quoteForm.elements.attachment.files[0];
     if (attachment && attachment.size > MAX_ATTACHMENT_SIZE) {
       quoteStatus.textContent = "Příloha je větší než 10 MB. Nahrajte prosím menší soubor.";
@@ -191,7 +201,7 @@ if (quoteForm && quoteSubmit && quoteStatus) {
         body: formData
       });
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || "Odeslání se nezdařilo");
+      if (!response.ok || !result.success || !result.reference) throw new Error(result.message || "Odeslání se nezdařilo");
 
       quoteForm.reset();
       quoteStatus.textContent = "";

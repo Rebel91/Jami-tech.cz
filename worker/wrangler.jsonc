@@ -12,7 +12,7 @@
   ],
   "vars": {
     "ALLOWED_ORIGINS": "https://jami-tech.cz,https://www.jami-tech.cz",
-    "EXPECTED_HOSTNAME": "jami-tech.cz",
+    "EXPECTED_HOSTNAME": "jami-tech.cz,www.jami-tech.cz",
     "MAIL_FROM": "Jami tech <formulare@jami-tech.cz>",
     "MAIL_TO": "info@jami-tech.cz"
   }
