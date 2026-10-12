@@ -404,3 +404,5 @@ body { font-size: 14px; }
 .product-card-configurable .product-meta { flex-wrap: wrap; }
 .add-to-cart:disabled { opacity: .5; cursor: not-allowed; }
 .product-options select:focus-visible, .product-options input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.product-card { scroll-margin-top: 104px; }

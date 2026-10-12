@@ -62,7 +62,7 @@ function renderProducts() {
     </div>` : "";
     const initial = product.sizes ? resolveProduct(`${product.id}-${product.sizes[0]}-${product.colors[0].id}`) : product;
     const available = Number.isInteger(initial.priceCents);
-    return `<article class="product-card${product.sizes ? " product-card-configurable" : ""}" data-product-id="${product.id}"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p>${options}<div class="product-meta"><span class="product-price">${available ? formatPrice(initial.priceCents) : "Cena bude doplněna"}</span><button class="add-to-cart" data-index="${index}" type="button" ${available ? "" : "disabled"}>PŘIDAT</button></div></div></article>`;
+    return `<article class="product-card${product.sizes ? " product-card-configurable" : ""}" id="product-${product.id}" data-product-id="${product.id}"><button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button><div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p>${options}<div class="product-meta"><span class="product-price">${available ? formatPrice(initial.priceCents) : "Cena bude doplněna"}</span><button class="add-to-cart" data-index="${index}" type="button" ${available ? "" : "disabled"}>PŘIDAT</button></div></div></article>`;
   }).join("");
   productGrid.querySelectorAll(".product-image img").forEach((image) => {
     image.addEventListener("error", () => {
@@ -251,3 +251,8 @@ document.querySelector("#send-order").addEventListener("click", () => {
 
 renderProducts();
 renderCart();
+
+if (window.location.hash) {
+  const linkedProduct = document.getElementById(window.location.hash.slice(1));
+  if (linkedProduct) linkedProduct.scrollIntoView({ block: "start" });
+}
