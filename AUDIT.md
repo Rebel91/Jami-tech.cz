@@ -4,6 +4,8 @@
 
 Web byl prověřen ve zdrojových souborech, v Chromium a WebKit a pomocí omezených kontrol veřejného webu a API. Nalezené chyby kontrastu, validace, množství v košíku a některé nedostatky ochrany byly opraveny. Zbývající provozní, právní a obsahové úkoly jsou uvedeny níže a v README.
 
+Opravy jsou publikované na jami-tech.cz a v objednávkovém Workeru. Po nasazení byly v Chromium i WebKit ověřeny veřejné ceny, přítomnost CSP a načtení skriptu i rámce Turnstile bez hlášených CSP chyb. Nešlo o ověření doručení formuláře. Nový backend odmítl nepodporovaný formát stavem 415; vypnutá adresa workers.dev vrací 404.
+
 Výsledek není certifikací bezpečnosti ani úplné shody s WCAG. Audit nezkoušel zahlcení veřejného serveru, neodesílal skutečné poptávky, objednávky ani e-maily a neprověřoval soukromé účty nebo jejich nastavení.
 
 ## Rozsah a ověření
