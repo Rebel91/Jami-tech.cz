@@ -13,7 +13,7 @@ const JSON_HEADERS = {
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["stl", "step", "stp", "obj", "3mf", "jpg", "jpeg", "png", "pdf"]);
-const TERMS_VERSION = "v3.0";
+const TERMS_VERSION = "v3.1";
 const FIELD_LIMITS = {
   name: 120,
   email: 254,
@@ -121,7 +121,7 @@ export async function buildQuote(formData, reference = generateReference("P"), n
   const fields = readFields(formData, ["name", "email", "phone", "quantity", "material", "deadline", "message", "privacy"]);
   requireFields(fields, ["name", "email", "message", "privacy"]);
   validateEmail(fields.email);
-  validateConsent(fields.privacy, "Souhlas se zpracováním údajů nebyl potvrzen.");
+  validateConsent(fields.privacy, "Seznámení se zásadami ochrany osobních údajů nebylo potvrzeno.");
   validateDeadline(fields.deadline, now);
   const attachment = formData.get("attachment");
   const attachments = attachment instanceof File && attachment.size > 0

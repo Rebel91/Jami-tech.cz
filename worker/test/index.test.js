@@ -68,13 +68,13 @@ test("odmítne přílohu s podvrženou příponou", async () => {
 
 test("odmítne neplatný e-mail objednávky", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "spatne", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":1}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "spatne", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":1}]', terms_version: "v3.1", terms: "on" })) data.set(name, value);
   assert.throws(() => buildOrder(data), /platnou e-mailovou adresu/);
 });
 
 test("spočítá cenu objednávky na serveru", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":2}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "kuryr", payment: "prevod", address: "Test 1", cart: '[{"id":"3dlac-400ml","qty":2}]', terms_version: "v3.1", terms: "on" })) data.set(name, value);
   const result = buildOrder(data);
   assert.match(result.subject, /527 Kč/);
   assert.match(result.text, /3DLAC: 2 ks/);
@@ -86,12 +86,12 @@ test("spočítá cenu objednávky na serveru", () => {
 
 test("odmítne neznámý produkt", () => {
   const data = new FormData();
-  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"podvrh","qty":1}]', terms_version: "v3.0", terms: "on" })) data.set(name, value);
+  for (const [name, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"podvrh","qty":1}]', terms_version: "v3.1", terms: "on" })) data.set(name, value);
   assert.throws(() => buildOrder(data), /neplatnou položku/);
 });
 
 test("odmítne prázdný košík a neplatný souhlas", () => {
-  const base = { name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", terms_version: "v3.0", terms: "on" };
+  const base = { name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", terms_version: "v3.1", terms: "on" };
   const emptyCart = new FormData();
   for (const [name, value] of Object.entries({ ...base, cart: "[]" })) emptyCart.set(name, value);
   assert.throws(() => buildOrder(emptyCart), /Košík je prázdný/);
@@ -159,10 +159,12 @@ test("přijatá poptávka zůstává úspěšná při výpadku potvrzovacího e-
 });
 
 
-test("lithophane bez stanovené ceny nelze objednat ani s podvrženou cenou", () => {
+test("lithophane používá stanovené ceny a odmítá neznámé varianty", () => {
   const data = new FormData();
-  for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"lithophane-120x90-cerna","qty":1,"priceCents":1}]', terms_version: "v3.0", terms: "on" })) data.set(key, value);
-  assert.throws(() => buildOrder(data), /Cena této varianty/);
+  for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"lithophane-120x90-cerna","qty":1,"priceCents":1}]', terms_version: "v3.1", terms: "on" })) data.set(key, value);
+  assert.match(buildOrder(data).text, /Celková cena: 489 Kč/);
+  data.set("cart", '[{"id":"lithophane-160x120-cerna","qty":1,"priceCents":1}]');
+  assert.match(buildOrder(data).text, /Celková cena: 789 Kč/);
   data.set("cart", '[{"id":"lithophane-120x90-ruzova","qty":1}]');
   assert.throws(() => buildOrder(data), /neplatnou položku/);
 });

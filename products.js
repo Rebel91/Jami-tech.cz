@@ -35,7 +35,7 @@ const products = [
     category: "vyrobky",
     sizes: ["120x90", "160x120"],
     // Ceny v haléřích doplňte také v worker/src/products.js. null = zatím nelze objednat.
-    prices: { "120x90": null, "160x120": null },
+    prices: { "120x90": 48900, "160x120": 78900 },
     colors: [
       { id: "cerna", label: "Černá", image: "pictures/produkty/lithophane/cerna.jpg" },
       { id: "cerna-trpytky", label: "Černá se třpytkami", image: "pictures/produkty/lithophane/cerna-trpytky.jpg" },

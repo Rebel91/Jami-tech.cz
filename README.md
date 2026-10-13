@@ -1,141 +1,120 @@
 # Jami tech
 
-Statický web pro prezentaci firmy Jami tech, portfolio zakázkového 3D tisku, e-shop a poptávkový formulář.
+Statický web pro zakázkový 3D tisk, portfolio, e-shop a poptávky. Aktualizováno 13. 10. 2026 podle stavu zdrojových souborů. Nastavení účtů a stav veřejného nasazení tím nejsou ověřeny.
 
-## Spuštění
+## Co je potřeba dokončit před spuštěním prodeje
 
-Na macOS lze web otevřít příkazem:
+### Podnikatelské a právní údaje
+
+- [ ] Po přidělení doplnit IČO do [obchodních podmínek](legal/obchodni-podminky.html) a [ochrany osobních údajů](legal/ochrana-osobnich-udaju.html).
+- [ ] Doplnit skutečný zápis podnikatele v rejstříku a stav plátcovství DPH do obchodních podmínek; ověřit jméno, sídlo a kontakty.
+- [ ] Stanovit datum účinnosti obou dokumentů a odstranit označení pracovního návrhu až po doplnění údajů a ověření provozních postupů.
+- [ ] Zavést zasílání potvrzení uzavřené smlouvy se zněním platných podmínek, které si zákazník může uložit. Současný automatický e-mail potvrzuje pouze přijetí objednávky; výslovné přijetí objednávky a platební pokyny je potřeba následně poslat zákazníkovi.
+- [ ] Připravit postup pro reklamace a vrácení zboží: příjem na uvedené adrese, evidence, písemná potvrzení a sledování lhůt podle podmínek.
+
+Vzor odstoupení je připraven v [legal/odstoupeni-od-smlouvy.html](legal/odstoupeni-od-smlouvy.html) a odkazují na něj obchodní podmínky.
+
+### Produkty a vyřízení objednávek
+
+- [ ] Doplnit u produktů aktuální dostupnost a dobu výroby/dodání. U zakázek potvrdit konkrétní termín před uzavřením smlouvy.
+- [ ] Doplnit skutečný materiál, rozsah dodávky a pokyny pro používání; u podsvíceného Lithophane uvést, zda je součástí kabel a napájecí zdroj.
+- [ ] Nahradit ilustrační obrázky Lithophane v e-shopu skutečnými fotografiemi výrobku. Na hlavní stránce nahradit zástupný vizuál fotografií podle postupu níže.
+- [ ] Připravit platební údaje, QR platbu, splatnost a vystavování dokladů; ověřit praktické zajištění kurýra, dobírky a osobního odběru.
+
+### Osobní údaje a uchování souborů
+
+- [ ] Zavést mazání podle návrhu zásad: neuskutečněné poptávky nejvýše 12 měsíců od poslední komunikace, výrobní podklady a fotografie nejvýše 3 měsíce po dodání, základní dokumentace objednávek zpravidla 3 roky. Výjimky pro spory a zákonné doklady jsou uvedeny v zásadách.
+- [ ] Zahrnout do mazání e-mailové přílohy, stažené soubory i zálohy. Zdrojový kód nyní automatické mazání těchto kopií neřeší.
+- [ ] Ověřit skutečné poskytovatele hostingu a e-mailové schránky, zpracovatelské podmínky služeb Cloudflare a Resend a použité záruky předání údajů mimo EHP; podle výsledku zpřesnit zásady ochrany osobních údajů.
+
+Fotografie v prohlížeči nemají automatickou expiraci. Odebrání položky z košíku je nemaže; aplikace je odstraňuje po úspěšném přijetí objednávky. Neodeslané fotografie lze odstranit vymazáním dat webu v prohlížeči.
+
+### Nasazení a kontrola provozu
+
+- [ ] Ověřit v účtech nastavení domény a DNS, Turnstile, odesílací domény Resend a tajných klíčů Workeru. Veřejný Site Key a adresa API jsou již vyplněné v [form-config.js](form-config.js); jejich funkčnost je třeba ověřit na nasazeném webu.
+- [ ] Nasadit aktuální web a Worker společně: obsahují nové ceny Lithophane a verzi obchodních podmínek `v3.1`.
+- [ ] Nastavit nebo ověřit omezení počtu požadavků na `forms.jami-tech.cz`; Worker vlastní rate limiting zatím neobsahuje.
+- [ ] Ověřit bezpečnostní hlavičky na skutečném hostingu, zejména Content-Security-Policy a X-Content-Type-Options.
+- [ ] Na veřejném webu vyzkoušet poptávku s přílohou a objednávku obou velikostí Lithophane s fotografií. Zkontrolovat ceny, dopravu, platby, interní zprávu i potvrzení zákazníkovi.
+- [ ] Ověřit objednávku a nahrávání fotografií na mobilu, chování při neúspěšném odeslání a funkčnost právních odkazů.
+
+## Lokální spuštění a kontrola
+
+Pro prohlížení webu použij Live Server ve VS Code. Přímé otevření `index.html` postačí pro základní náhled; odeslání formulářů ověřuj z povolené domény, protože backend kontroluje původ požadavku.
+
+Kontrola backendu ze složky `worker/`:
 
 ```bash
-open index.html
+npm run check
 ```
 
-Pro pohodlnější kontrolu změn použij ve VS Code **Live Server**.
+Spouští kontrolu syntaxe a testy. Při poslední kontrole prošlo všech 15 testů; tím není ověřena funkčnost produkčních účtů a doručování e-mailů.
 
-## Formulářový backend
+## Nasazení backendu
 
-Poptávky i objednávky přijímá Cloudflare Worker ve složce `worker/`. Worker ověřuje Cloudflare Turnstile, povolený původ požadavku, délku polí a u příloh také velikost, příponu a signaturu souboru. Resend doručí interní zprávu na adresu provozovatele a zákazníkovi odešle potvrzení s referenčním číslem a souhrnem. Tajné klíče nesmí být uložené v repozitáři.
+Poptávky a objednávky zpracovává Cloudflare Worker ve složce `worker/`. Ověřuje Turnstile, povolený původ požadavku, vstupy a přílohy. Resend odesílá interní zprávu a potvrzení zákazníkovi s referenčním číslem.
 
-### První nasazení
+Konfigurace domény `forms.jami-tech.cz`, povolených originů a e-mailových adres je v [worker/wrangler.jsonc](worker/wrangler.jsonc). Při prvním nastavení je potřeba v účtech ověřit DNS domény, vytvořit Turnstile widget pro používané hostname a ověřit odesílací doménu v Resend.
 
-1. Založ účet Cloudflare, přidej doménu `jami-tech.cz` a podle pokynů Cloudflare změň nameservery u registrátora. Před změnou ověř, že Cloudflare převzal všechny DNS záznamy používané GitHub Pages a e-mailem.
-2. V Cloudflare Turnstile vytvoř widget typu Managed pro hostname `jami-tech.cz`. Ve [form-config.js](form-config.js) vlož veřejný Site Key do `turnstileSiteKey`.
-3. Založ účet Resend, přidej a ověř doménu `jami-tech.cz` pomocí DNS záznamů zobrazených Resendem a vytvoř API klíč s oprávněním k odesílání.
-4. V terminálu spusť:
+Ze složky `worker/` při prvním nastavení:
 
 ```bash
-cd worker
 npm install
 npx wrangler login
 npx wrangler secret put TURNSTILE_SECRET_KEY
 npx wrangler secret put RESEND_API_KEY
+```
+
+Tajné hodnoty zadej do terminálu, neukládej je do repozitáře. Při dalších nasazeních není potřeba klíče znovu zadávat, pokud se nezměnily.
+
+Nasazení Workeru ze složky `worker/`:
+
+```bash
 npm run deploy
 ```
 
-Hodnoty tajných klíčů zadej přímo do terminálu. Po nasazení musí adresa `https://forms.jami-tech.cz` odpovídat z nasazeného Workeru.
+Statický web se nasazuje samostatně prostřednictvím jeho hostingu. Nasazení Workeru samo nezveřejní změny HTML a JavaScriptu webu.
 
-### Kontrola a omezení provozu
+## Správa produktů a fotografií
 
-```bash
-cd worker
-npm run check
-```
+Produktové údaje upravuj v [products.js](products.js) a ceny se stejnými ID také v [worker/src/products.js](worker/src/products.js). Ceny se ukládají v haléřích; server počítá částku z vlastního katalogu.
 
-V Cloudflare nastav rate limiting pravidlo pro hostname `forms.jami-tech.cz`, například maximálně 5 POST požadavků z jedné IP adresy za minutu. Kontrola signatury přílohy brání jednoduchému přejmenování souboru, ale nenahrazuje plnohodnotný antivirový skener. Přílohy proto otevírej pouze v aktualizovaném a izolovaném programu.
+Lithophane má velikosti **120 × 90 mm za 489 Kč** a **160 × 120 mm za 789 Kč**. Obě ceny platí pro černý rámeček, černý se třpytkami a světle modrý. Změna barvy přepíná náhled; každá kombinace velikosti a barvy má vlastní ID.
 
-## Portfolio
+Zákazník nahrává JPG, PNG nebo WebP. Limit jedné fotografie i součet fotografií v objednávce je 10 MB. Pro různé fotografie ve stejné kombinaci velikosti a barvy je zatím potřeba vytvořit samostatné objednávky.
 
-Fotografie realizací patří do `pictures/portfolio/`.
+### Produktové fotografie
 
-Doporučené parametry:
+Ukládej je do `pictures/produkty/`, ideálně v poměru 1:1, v rozlišení 1200 × 1200 px (minimum 800 × 800 px), ve formátu WebP, JPG nebo PNG a do 1 MB. V katalogu uprav cestu, skutečné rozměry a popis. Obdélníkové snímky se v kartách oříznou, proto ponech kolem produktu volný okraj.
 
-- poměr stran `1:1`
-- ideální velikost `1200 × 1200 px`
-- minimum `800 × 800 px`
-- formát `.jpg` nebo `.jpeg`
-- velikost souboru do `1 MB`
+Současné ilustrační náhledy Lithophane vytvořené pomocí ImageGen jsou v `pictures/produkty/lithophane/cerna.jpg`, `cerna-trpytky.jpg` a `svetle-modra.jpg`.
 
-Používej jednoduché názvy bez mezer, například `03.jpeg`, a přidej obrázek také do `index.html`:
+### Lithophane na hlavní stránce
 
-```html
-<img src="pictures/portfolio/03.jpeg" alt="Ukázka realizace">
-```
+Do `pictures/lithophane/01.webp` vlož skutečnou fotografii, ideálně 1200 × 1200 px. V [index.html](index.html) v sekci `#lithophane` odkomentuj připravený obrázek uvnitř `.lithophane-image` a uprav jeho alternativní text a rozměry.
 
-Portfolio zobrazuje fotografie ve čtvercových kartách. Obdélníkové fotografie se automaticky oříznou, proto nechávej hlavní motiv uprostřed a důležité detaily dál od okrajů.
+### Portfolio
 
-## Fotografie do e-shopu
+Fotografie ukládej do `pictures/portfolio/` a přidej do `index.html`. Doporučený poměr je 1:1, rozlišení 1200 × 1200 px, formát JPG/JPEG a velikost do 1 MB. Používej názvy bez mezer, například `03.jpeg`. U každé realizace uveď konkrétní alternativní popis; do portfolia přidávej zákaznické podklady pouze s odpovídajícím svolením.
 
-Produktové fotografie patří do složky `pictures/produkty/`.
+## Další rozvoj
 
-Doporučené parametry:
+- Přidat více skutečných fotografií produktů a popisy realizací včetně materiálu.
+- Přidat reference zákazníků s jejich svolením.
+- Umožnit více různých fotografií pro stejnou variantu Lithophane v jedné objednávce.
+- Doplnit automatické odstranění neodeslaných fotografií z prohlížeče po stanovené době.
 
-- poměr stran `1:1`
-- ideální velikost `1200 × 1200 px`
-- minimum `800 × 800 px`
-- formát `.webp`, `.jpg`, `.jpeg` nebo `.png`
-- velikost souboru do `1 MB`
+## Průběžná údržba
 
-Fotografii připoj k produktu v `products.js`:
+Pravidelně zálohuj projekt, aktualizuj závislosti a ověřuj doručování formulářů. Před nasazením kontroluj změny v Gitu, spusť backendové testy a zkontroluj web na počítači i mobilu. Uchovávané zákaznické údaje a přílohy maž podle zásad ochrany osobních údajů.
 
-```js
-{
-	id: "jedinecne-id-produktu",
-	name: "Název produktu",
-	description: "Krátký popis produktu.",
-	priceCents: 29900,
-	image: "pictures/produkty/02.webp",
-	imageWidth: 1200,
-	imageHeight: 1200,
-	category: "vyrobky"
-}
-```
+## Struktura projektu
 
-Stejný produkt přidej také do serverového katalogu `worker/src/products.js`. Worker z něj počítá cenu objednávky a neznámé či podvržené položky odmítá.
-
-E-shop zobrazuje produktové fotografie ve čtvercových kartách a obdélníkové obrázky automaticky ořízne. Produkt proto fotografuj uprostřed a nech kolem něj volný okraj.
-
-## Budoucí zkvalitnění služeb a bezpečnosti
-
-### Zkvalitnění služeb
-
-1. Přidat ke každému produktu více fotografií, přesné rozměry, materiál, barvu, dobu výroby a aktuální dostupnost.
-2. Doplnit k produktům jasné informace o dopravě, platbě, reklamaci a vrácení zboží.
-3. Rozšířit poptávkový formulář o možnost nahrát model nebo fotografii a přidat automatické potvrzení přijetí poptávky.
-4. Přidat reference zákazníků a u realizací uvést krátký popis zadání a použitého materiálu.
-5. Zkontrolovat web na mobilu, zlepšit kontrast a doplnit popisné `alt` texty ke všem důležitým obrázkům.
-6. Zmenšovat fotografie do moderního formátu WebP nebo AVIF a pravidelně kontrolovat rychlost načítání.
-
-### Bezpečnost
-
-1. Pravidelně zálohovat celý repozitář, fotografie a konfiguraci formuláře.
-2. Omezit formulář proti spamu pomocí honeypotu nebo CAPTCHA, validace vstupů a limitu počtu odeslání.
-3. Nikdy nevkládat hesla, tajné API klíče ani osobní údaje přímo do veřejného HTML nebo JavaScriptu.
-4. Nastavit na hostingu bezpečnostní hlavičky, zejména Content-Security-Policy, X-Content-Type-Options a Referrer-Policy.
-5. Pravidelně aktualizovat externí skripty a kontrolovat odkazy, formuláře a doménu přes HTTPS.
-6. Ověřit, že se osobní údaje z formulářů ukládají a mažou podle zásad ochrany osobních údajů.
-7. Před každým nasazením zkontrolovat změny v Gitu, otestovat formuláře a ověřit web v běžném i mobilním prohlížeči.
-
-## Struktura
-
-- `index.html` - hlavní stránka a portfolio
-- `styles.css` - vzhled a responzivní rozložení
-- `script.js` - navigace, pohyb portfolia a náhled fotografií
-- `eshop.html` a `eshop.js` - e-shop, filtrování a košík
-- `products.js` - data produktů
-- `objednavka.html` a `objednavka.js` - objednávkový formulář
-- `pictures/` - logo, produktové fotografie a portfolio
-- `legal/` - právní informace
-
-## Fotografie Lithophane
-
-Sekce `#lithophane` následuje na hlavní stránce po službách. Fotografie je vlevo, text vpravo; na mobilu jsou pod sebou. Připravený rámeček je dočasný zástupný vizuál.
-
-Do `pictures/lithophane/01.webp` vlož fotografii (doporučeno 1200 × 1200 px). V `index.html` odkomentuj připravený `<img>` uvnitř `.lithophane-image`; zástupný rámeček se automaticky skryje. Podle skutečné fotografie uprav `alt` a rozměry.
-
-## Lithophane v e-shopu
-
-Produkt nabízí velikosti 120 × 90 mm a 160 × 120 mm a rámečky černý, černý se třpytkami a světle modrý. Ceny jsou zatím `null`: zákazník vidí „Cena bude doplněna“ a nemůže produkt přidat do košíku. Pro zahájení prodeje doplň ceny v haléřích pro každou velikost v `products.js` i `worker/src/products.js` a nasaď Worker i web.
-
-Volba barvy přepíná produktový náhled. Ilustrační fotografie jsou v `pictures/produkty/lithophane/cerna.jpg`, `cerna-trpytky.jpg` a `svetle-modra.jpg`. Později je nahraď skutečnými fotografiemi výrobku. Náhledy byly vytvořené vestavěným ImageGen: studiový snímek na bílém pozadí, jednoduchý klasický 3D tištěný rámeček s teple podsvícenou lithophane horskou krajinou a jezerem, bez textu a loga; barevné editace mění pouze povrch rámečku na černou s jemnými stříbrnými třpytkami nebo světle modrou a zachovávají geometrii, fotografii, světlo a pozadí.
-
-Vlastní fotografie zákazníka: JPG, PNG nebo WebP, maximálně 10 MB. `photo-upload.js` kontroluje příponu i signaturu a uchovává soubor v IndexedDB pouze v daném prohlížeči pro konkrétní variantu. Po doplnění cen se soubor připojí k objednávce a po jejím přijetí se místní kopie smaže. Server kontroluje obrazový formát znovu; souhrnný limit fotografií v jedné objednávce je 10 MB. Každá kombinace velikosti a barvy má vlastní ID, takže se v košíku, souhrnu a e-mailech neztrácí zvolená varianta. Pro různé fotografie u stejné varianty zatím vytvoř samostatné objednávky.
+- `index.html`, `styles.css`, `script.js` — hlavní stránka, vzhled, navigace a portfolio.
+- `eshop.html`, `eshop.js`, `products.js` — katalog, varianty produktů a košík.
+- `objednavka.html`, `objednavka.js` — objednávkový formulář.
+- `photo-upload.js` — validace a místní uložení fotografií v IndexedDB.
+- `form-config.js` — veřejná konfigurace API a Turnstile.
+- `worker/` — serverové zpracování formulářů, katalog cen a testy.
+- `legal/` — obchodní podmínky, ochrana osobních údajů a vzor odstoupení.
+- `pictures/` — logo, portfolio a produktové fotografie.
