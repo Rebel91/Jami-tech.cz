@@ -58,7 +58,7 @@ function renderProducts() {
       <label>Vaše fotografie<input type="file" data-photo accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"></label>
       <small>JPG, PNG nebo WebP, maximálně 10 MB. Fotografie se odešle až s objednávkou.</small>
       <p class="product-photo-status" role="status" aria-live="polite"></p>
-      <small>Ilustrační náhled produktu. Cenu doplníme před zahájením prodeje.</small>
+      <small>Ilustrační náhled produktu.</small>
     </div>` : "";
     const initial = product.sizes ? resolveProduct(`${product.id}-${product.sizes[0]}-${product.colors[0].id}`) : product;
     const available = Number.isInteger(initial.priceCents);
