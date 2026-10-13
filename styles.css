@@ -406,3 +406,8 @@ body { font-size: 14px; }
 .product-options select:focus-visible, .product-options input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .product-card { scroll-margin-top: 104px; }
+.shop-page .product-card { display: flex; flex-direction: column; }
+.shop-page .product-card > .product-image { flex-shrink: 0; }
+.shop-page .product-info { display: flex; flex-direction: column; flex: 1; }
+.shop-page .product-info > p:not(.product-category) { font-size: 14px; }
+.shop-page .product-meta { margin-top: auto; }
