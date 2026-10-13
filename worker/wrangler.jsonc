@@ -3,7 +3,7 @@
   "name": "jami-tech-forms",
   "main": "src/index.js",
   "compatibility_date": "2026-09-15",
-  "workers_dev": true,
+  "workers_dev": false,
   "routes": [
     {
       "pattern": "forms.jami-tech.cz",

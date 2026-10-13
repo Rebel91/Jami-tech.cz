@@ -178,3 +178,71 @@ test("fotografie objednávky přijímá jen obrazové formáty a kontroluje jeji
   await assert.rejects(validateOrderPhoto(new File(["není obrázek"], "foto.jpg")), /neodpovídá/);
   await assert.rejects(validateOrderPhoto(new File([new Uint8Array(10 * 1024 * 1024 + 1)], "foto.png")), /větší než 10 MB/);
 });
+
+test("odmítne zděděné klíče dopravy a platby a duplicitní produkty", () => {
+  const data = new FormData();
+  for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"3dlac-400ml","qty":1}]', terms_version: "v3.1", terms: "on" })) data.set(key, value);
+  for (const key of ["toString", "constructor", "__proto__"]) {
+    data.set("payment", key);
+    assert.throws(() => buildOrder(data), /Neplatný způsob/);
+    data.set("payment", "hotove");
+    data.set("delivery", key);
+    assert.throws(() => buildOrder(data), /Neplatný způsob/);
+    data.set("delivery", "osobne");
+  }
+  data.set("cart", '[{"id":"3dlac-400ml","qty":99},{"id":"3dlac-400ml","qty":99}]');
+  assert.throws(() => buildOrder(data), /duplicitní/);
+});
+
+test("odmítne neexistující datum a neplatný počet kusů v poptávce", async () => {
+  const data = new FormData();
+  for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", message: "Test", privacy: "on" })) data.set(key, value);
+  for (const date of ["2026-99-99", "2027-02-30"]) {
+    data.set("deadline", date);
+    await assert.rejects(() => buildQuote(data), /platné datum/);
+  }
+  data.delete("deadline");
+  for (const qty of ["0", "-1", "1.5", "Infinity"]) {
+    data.set("quantity", qty);
+    await assert.rejects(() => buildQuote(data), /kladné celé číslo/);
+  }
+});
+
+test("limit velikosti požadavku platí i bez Content-Length a před ověřením tokenu", async () => {
+  const env = { ALLOWED_ORIGINS: "https://jami-tech.cz", TURNSTILE_SECRET_KEY: "test", RESEND_API_KEY: "test", MAIL_FROM: "test", MAIL_TO: "test" };
+  const tooLarge = new ReadableStream({ start(controller) {
+    controller.enqueue(new Uint8Array(10 * 1024 * 1024 + 128 * 1024 + 1));
+    controller.close();
+  } });
+  const request = new Request("https://forms.jami-tech.cz/order", { method: "POST", headers: { Origin: "https://jami-tech.cz", "Content-Type": "multipart/form-data; boundary=test" }, body: tooLarge, duplex: "half" });
+  assert.equal(request.headers.has("Content-Length"), false);
+  assert.equal((await worker.fetch(request, env)).status, 413);
+  const wrongType = new Request("https://forms.jami-tech.cz/order", { method: "POST", headers: { Origin: "https://jami-tech.cz", "Content-Type": "application/json" }, body: "{}" });
+  assert.equal((await worker.fetch(wrongType, env)).status, 415);
+});
+
+test("objednávkový endpoint vyžaduje fotografii a předá ji jen internímu e-mailu", async () => {
+  const originalFetch = globalThis.fetch;
+  const emails = [];
+  const env = { ALLOWED_ORIGINS: "https://jami-tech.cz", EXPECTED_HOSTNAME: "jami-tech.cz", TURNSTILE_SECRET_KEY: "test", RESEND_API_KEY: "test", MAIL_FROM: "test", MAIL_TO: "test" };
+  try {
+    globalThis.fetch = async (url, options) => {
+      if (String(url).includes("siteverify")) return Response.json({ success: true, action: "order", hostname: "jami-tech.cz" });
+      emails.push(JSON.parse(options.body));
+      return Response.json({ id: "test" });
+    };
+    const data = new FormData();
+    for (const [key, value] of Object.entries({ name: "Jan", email: "jan@example.com", phone: "123", delivery: "osobne", payment: "hotove", cart: '[{"id":"lithophane-120x90-cerna","qty":1,"priceCents":1}]', terms_version: "v3.1", terms: "on", "cf-turnstile-response": "test" })) data.set(key, value);
+    const request = () => new Request("https://forms.jami-tech.cz/order", { method: "POST", headers: { Origin: "https://jami-tech.cz" }, body: data });
+    assert.equal((await worker.fetch(request(), env)).status, 400);
+    assert.equal(emails.length, 0);
+    data.set("photo-lithophane-120x90-cerna", new File([new Uint8Array([137,80,78,71,13,10,26,10])], "foto.png"));
+    const accepted = await worker.fetch(request(), env);
+    assert.equal(accepted.status, 200);
+    assert.equal((await accepted.json()).confirmationSent, true);
+    assert.equal(emails.length, 2);
+    assert.match(emails[0].subject, /489 Kč/);
+    assert.equal(emails[0].attachments[0].filename, "lithophane-120x90-cerna-foto.png");
+    assert.deepEqual(emails[1].attachments, []);
+  } finally { globalThis.fetch = originalFetch; }
+});

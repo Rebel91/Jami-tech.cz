@@ -12,6 +12,7 @@ const JSON_HEADERS = {
 };
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const MAX_REQUEST_SIZE = MAX_ATTACHMENT_SIZE + 128 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["stl", "step", "stp", "obj", "3mf", "jpg", "jpeg", "png", "pdf"]);
 const TERMS_VERSION = "v3.1";
 const FIELD_LIMITS = {
@@ -55,11 +56,11 @@ export default {
 
     try {
       const contentLength = Number(request.headers.get("Content-Length") || 0);
-      if (contentLength > MAX_ATTACHMENT_SIZE + 128 * 1024) {
+      if (contentLength > MAX_REQUEST_SIZE) {
         return json({ success: false, message: "Požadavek je příliš velký." }, 413, corsHeaders);
       }
 
-      const formData = await request.formData();
+      const formData = await readFormData(request);
       if (text(formData, "botcheck")) return json({ success: false, message: "Ověření proti spamu selhalo." }, 400, corsHeaders);
 
       const turnstile = await verifyTurnstile(
@@ -94,7 +95,7 @@ export default {
       const emailResponse = await sendEmailWithRetry(payload, env);
 
       if (!emailResponse.ok) {
-        console.error("Resend failed", emailResponse.status, await emailResponse.text());
+        console.error("Resend failed", emailResponse.status);
         return json({ success: false, message: "E-mail se nepodařilo odeslat." }, 502, corsHeaders);
       }
 
@@ -112,7 +113,7 @@ export default {
     } catch (error) {
       if (error instanceof FormError) return json({ success: false, message: error.message }, error.status, corsHeaders);
       console.error("Form submission failed", error);
-      return json({ success: false, message: "Poptávku se nepodařilo zpracovat." }, 500, corsHeaders);
+      return json({ success: false, message: "Požadavek se nepodařilo zpracovat." }, 500, corsHeaders);
     }
   }
 };
@@ -123,6 +124,9 @@ export async function buildQuote(formData, reference = generateReference("P"), n
   validateEmail(fields.email);
   validateConsent(fields.privacy, "Seznámení se zásadami ochrany osobních údajů nebylo potvrzeno.");
   validateDeadline(fields.deadline, now);
+  if (fields.quantity && (!/^\d+$/.test(fields.quantity) || Number(fields.quantity) < 1)) {
+    throw new FormError("Počet kusů musí být kladné celé číslo.");
+  }
   const attachment = formData.get("attachment");
   const attachments = attachment instanceof File && attachment.size > 0
     ? [await validateAttachment(attachment)]
@@ -171,8 +175,8 @@ export function buildOrder(formData, reference = generateReference("O")) {
   validateEmail(fields.email);
   validateConsent(fields.terms, "Souhlas s obchodními podmínkami nebyl potvrzen.");
   if (fields.terms_version !== TERMS_VERSION) throw new FormError("Verze obchodních podmínek není aktuální. Obnovte stránku.");
-  const delivery = DELIVERY[fields.delivery];
-  const payment = PAYMENT[fields.payment];
+  const delivery = Object.hasOwn(DELIVERY, fields.delivery) ? DELIVERY[fields.delivery] : null;
+  const payment = Object.hasOwn(PAYMENT, fields.payment) ? PAYMENT[fields.payment] : null;
   if (!delivery || !payment) throw new FormError("Neplatný způsob dopravy nebo platby.");
   if (fields.delivery === "kuryr" && !fields.address) throw new FormError("Vyplňte adresu doručení.");
   if ((fields.payment === "dobirka" && fields.delivery !== "kuryr")
@@ -254,7 +258,11 @@ export function minimumDeadline(date = new Date()) {
 
 function validateDeadline(deadline, now) {
   if (!deadline) return;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline) || deadline < minimumDeadline(now)) {
+  const parsed = new Date(`${deadline}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline) || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== deadline) {
+    throw new FormError("Zadejte platné datum požadovaného termínu.");
+  }
+  if (deadline < minimumDeadline(now)) {
     throw new FormError("Požadovaný termín musí být nejdříve za 3 dny.");
   }
 }
@@ -268,11 +276,14 @@ function parseCart(value) {
   }
   if (!Array.isArray(cart) || cart.length === 0 || cart.length > 50) throw new FormError("Košík je prázdný nebo příliš velký.");
 
+  const ids = new Set();
   return cart.map((item) => {
-    const product = item && PRODUCTS[item.id];
+    const product = item && Object.hasOwn(PRODUCTS, item.id) ? PRODUCTS[item.id] : null;
     const qty = Number(item?.qty);
     if (product && !Number.isInteger(product.priceCents)) throw new FormError("Cena této varianty ještě není stanovená. Produkt zatím nelze objednat.");
     if (!product || !Number.isInteger(qty) || qty < 1 || qty > 99) throw new FormError("Košík obsahuje neplatnou položku.");
+    if (ids.has(item.id)) throw new FormError("Košík obsahuje duplicitní položku.");
+    ids.add(item.id);
     return { product, qty, id: item.id };
   });
 }
@@ -357,6 +368,34 @@ function validateConsent(value, message) {
 function text(formData, name) {
   const value = formData.get(name);
   return typeof value === "string" ? value.trim() : "";
+}
+
+async function readFormData(request) {
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!/^multipart\/form-data\s*;/i.test(contentType) && !/^application\/x-www-form-urlencoded(?:\s*;|$)/i.test(contentType)) {
+    throw new FormError("Nepodporovaný formát formuláře.", 415);
+  }
+  const reader = request.body?.getReader();
+  if (!reader) throw new FormError("Formulář je prázdný.");
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_REQUEST_SIZE) {
+        await reader.cancel();
+        throw new FormError("Požadavek je příliš velký.", 413);
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  try {
+    return await new Response(new Blob(chunks), { headers: { "Content-Type": contentType } }).formData();
+  } catch {
+    throw new FormError("Formulář má neplatný formát.");
+  }
 }
 
 function sanitizeFilename(filename) {

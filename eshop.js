@@ -26,7 +26,8 @@ function readCart() {
   try {
     const savedCart = JSON.parse(localStorage.getItem("jami-cart") || "[]");
     if (!Array.isArray(savedCart)) return [];
-    return savedCart.flatMap((savedItem) => {
+    return savedCart.slice(0, 50).flatMap((savedItem) => {
+      if (!savedItem || typeof savedItem !== "object") return [];
       const product = resolveProduct(savedItem.id)
         || products.find((item) => item.name === savedItem.name);
       const quantity = Number.isInteger(savedItem.qty) ? Math.max(0, savedItem.qty) : 1;
@@ -129,12 +130,14 @@ function renderCart() {
     items.innerHTML = '<p class="cart-empty">Košík je zatím prázdný.</p>';
     return;
   }
-  items.innerHTML = groupCart(state.cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
+  items.innerHTML = groupCart(state.cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" max="99" step="1" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
 }
 
 function setQuantity(id, qty) {
+  qty = Math.min(99, Math.max(0, Math.floor(Number(qty) || 0)));
   const product = resolveProduct(id);
   if (!product) return;
+  if (qty === 0 && product.requiresPhoto) window.JamiPhotos.remove(id).catch(() => {});
   state.cart = state.cart.filter((item) => item.id !== id);
   for (let i = 0; i < qty; i += 1) state.cart.push(product);
   renderCart();
@@ -199,6 +202,10 @@ document.addEventListener("click", (event) => {
     const card = addButton.closest(".product-card");
     const product = selectedProduct(card);
     if (!Number.isInteger(product.priceCents)) return;
+    if (state.cart.filter(item => item.id === product.id).length >= 99) {
+      window.alert("Pro jednu variantu lze objednat nejvýše 99 kusů.");
+      return;
+    }
     if (product.requiresPhoto) {
       addButton.disabled = true;
       window.JamiPhotos.get(product.id).then((file) => {
@@ -208,7 +215,7 @@ document.addEventListener("click", (event) => {
         .finally(() => { addButton.disabled = false; });
     } else { state.cart.push(product); renderCart(); setDrawer(true); }
   }
-  if (removeButton) { state.cart = state.cart.filter((product) => product.id !== removeButton.dataset.cartId); renderCart(); }
+  if (removeButton) setQuantity(removeButton.dataset.cartId, 0);
   if (qtyButton) {
     const id = qtyButton.dataset.cartId;
     const currentQty = state.cart.filter((product) => product.id === id).length;
@@ -244,7 +251,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.querySelector("#send-order").addEventListener("click", () => {
-  if (!state.cart.length) { window.alert("Nejdříve přidej do košíku alespoň jeden produkt."); return; }
+  if (!state.cart.length) { window.alert("Nejdříve přidejte do košíku alespoň jeden produkt."); return; }
   saveCart(state.cart);
   window.location.href = "objednavka.html";
 });

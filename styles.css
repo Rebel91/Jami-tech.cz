@@ -411,3 +411,12 @@ body { font-size: 14px; }
 .shop-page .product-info { display: flex; flex-direction: column; flex: 1; }
 .shop-page .product-info > p:not(.product-category) { font-size: 14px; }
 .shop-page .product-meta { margin-top: auto; }
+
+/* Čitelný kontrast drobných popisků a aktivní navigace. */
+.product-category { color: #ff9b9b !important; }
+.quote-form-heading > .eyebrow { color: #ff9b9b; }
+.main-nav a.nav-active { color: #a51f1f !important; }
+.product-image-button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.portfolio-pause { flex-shrink: 0; }
+.portfolio-pause:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 850px) { .portfolio-pause { margin-top: 20px; } }

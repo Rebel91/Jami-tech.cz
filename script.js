@@ -32,6 +32,7 @@ if (portfolioWindow && portfolioGrid && portfolioTrack) {
   let trackWidth = 0;
   let speed = 0; // px/s, dopocita se z sirky pasu
   let paused = false;
+  let manuallyPaused = false;
   let lastTime = null;
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -48,7 +49,7 @@ if (portfolioWindow && portfolioGrid && portfolioTrack) {
     if (lastTime === null) lastTime = now;
     const dt = (now - lastTime) / 1000;
     lastTime = now;
-    if (!paused) {
+    if (!paused && !manuallyPaused) {
       offset -= speed * dt;
       if (offset <= -trackWidth) offset += trackWidth;
       applyOffset();
@@ -56,6 +57,15 @@ if (portfolioWindow && portfolioGrid && portfolioTrack) {
     requestAnimationFrame(tick);
   };
   if (!prefersReducedMotion) requestAnimationFrame(tick);
+  const pauseButton = document.querySelector("#portfolio-pause");
+  if (pauseButton) {
+    pauseButton.hidden = prefersReducedMotion;
+    pauseButton.addEventListener("click", () => {
+      manuallyPaused = !manuallyPaused;
+      pauseButton.setAttribute("aria-pressed", String(manuallyPaused));
+      pauseButton.textContent = manuallyPaused ? "Pokračovat v posunu" : "Pozastavit posun";
+    });
+  }
 
   portfolioWindow.addEventListener("focusin", () => { paused = true; });
   portfolioWindow.addEventListener("focusout", (event) => {
@@ -215,7 +225,9 @@ if (quoteForm && quoteSubmit && quoteStatus) {
       );
     } catch (error) {
       console.error("Quote submission failed", error);
-      quoteStatus.textContent = "Poptávku se nepodařilo odeslat. Zkuste to znovu nebo napište na info@jami-tech.cz.";
+      quoteStatus.textContent = error.message === "Failed to fetch" || error instanceof TypeError
+        ? "Poptávku se nepodařilo odeslat. Zkuste to znovu nebo napište na info@jami-tech.cz."
+        : error.message;
       quoteStatus.className = "quote-form-status is-error";
     } finally {
       quoteSubmit.disabled = false;

@@ -24,7 +24,8 @@ function readCart() {
   try {
     const savedCart = JSON.parse(localStorage.getItem("jami-cart") || "[]");
     if (!Array.isArray(savedCart)) return [];
-    return savedCart.flatMap((savedItem) => {
+    return savedCart.slice(0, 50).flatMap((savedItem) => {
+      if (!savedItem || typeof savedItem !== "object") return [];
       const product = resolveProduct(savedItem.id)
         || products.find((item) => item.name === savedItem.name);
       const quantity = Number.isInteger(savedItem.qty) ? Math.max(0, savedItem.qty) : 1;
@@ -79,18 +80,20 @@ function groupCart(items) {
 
 function saveCart() {
   const storedCart = groupCart(cart).map(({ product, qty }) => ({ id: product.id, qty }));
-  localStorage.setItem("jami-cart", JSON.stringify(storedCart));
+  try { localStorage.setItem("jami-cart", JSON.stringify(storedCart)); } catch { /* Košík zůstává dostupný v této stránce. */ }
 }
 
 function renderSummary() {
   emptyNotice.hidden = cart.length > 0;
   orderForm.hidden = cart.length === 0;
-  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
+  itemsContainer.innerHTML = groupCart(cart).map(({ product, qty }) => `<div class="cart-item"><div><strong>${product.name}</strong><span>${formatPrice(product.priceCents)}</span></div><div class="qty-control"><button class="qty-btn" data-qty-action="dec" data-cart-id="${product.id}" type="button" aria-label="Ubrat jeden kus produktu ${product.name}">−</button><input class="qty-input" type="number" min="0" max="99" step="1" value="${qty}" data-cart-id="${product.id}" aria-label="Množství produktu ${product.name}"><button class="qty-btn" data-qty-action="inc" data-cart-id="${product.id}" type="button" aria-label="Přidat jeden kus produktu ${product.name}">+</button></div><button class="remove-item" data-cart-id="${product.id}" type="button" aria-label="Odebrat ${product.name}">×</button></div>`).join("");
 }
 
 function setQuantity(id, qty) {
+  qty = Math.min(99, Math.max(0, Math.floor(Number(qty) || 0)));
   const product = resolveProduct(id);
   if (!product) return;
+  if (qty === 0 && product.requiresPhoto) window.JamiPhotos.remove(id).catch(() => {});
   const remaining = cart.filter((item) => item.id !== id);
   cart.length = 0;
   cart.push(...remaining);
@@ -104,13 +107,7 @@ itemsContainer.addEventListener("click", (event) => {
   const removeButton = event.target.closest(".remove-item");
   const qtyButton = event.target.closest(".qty-btn");
   if (removeButton) {
-    const id = removeButton.dataset.cartId;
-    const remaining = cart.filter((product) => product.id !== id);
-    cart.length = 0;
-    cart.push(...remaining);
-    saveCart();
-    renderSummary();
-    updateTotals();
+    setQuantity(removeButton.dataset.cartId, 0);
   }
   if (qtyButton) {
     const id = qtyButton.dataset.cartId;
@@ -127,10 +124,10 @@ itemsContainer.addEventListener("change", (event) => {
 });
 
 const paymentNotes = {
-  prevod: "Po odeslání objednávky ti pošleme číslo účtu a částku k úhradě e-mailem.",
-  qr: "QR platbu pro rychlé zaplacení ti zašleme e-mailem spolu s potvrzením objednávky.",
-  dobirka: "Částku uhradíš v hotovosti nebo kartou kurýrovi při doručení.",
-  hotove: "Částku uhradíš v hotovosti při osobním převzetí."
+  prevod: "Po odeslání objednávky vám pošleme číslo účtu a částku k úhradě e-mailem.",
+  qr: "QR platbu pro rychlé zaplacení vám zašleme e-mailem spolu s potvrzením objednávky.",
+  dobirka: "Částku uhradíte kurýrovi při doručení podle jeho dostupných způsobů platby.",
+  hotove: "Částku uhradíte v hotovosti při osobním převzetí."
 };
 const deliveryLabels = { kuryr: "Kurýrem na adresu (129 Kč)", osobne: "Osobní odběr (0 Kč)" };
 const paymentLabels = { prevod: "Bankovní převod", qr: "QR kód", dobirka: "Dobírka kurýrovi", hotove: "Hotově při osobním převzetí" };
@@ -205,7 +202,7 @@ orderForm.addEventListener("submit", async (event) => {
       for (const { product } of groupCart(cart)) {
         if (product.requiresPhoto) window.JamiPhotos.remove(product.id).catch(() => {});
       }
-      localStorage.removeItem("jami-cart");
+      try { localStorage.removeItem("jami-cart"); } catch { /* Přijatá objednávka zůstává úspěšná i při blokovaném úložišti. */ }
       cart.length = 0;
       if (checkoutLayout) checkoutLayout.hidden = true;
       if (orderSuccess) {
@@ -225,7 +222,9 @@ orderForm.addEventListener("submit", async (event) => {
     }
   } catch (error) {
     console.error("Order submission failed", error);
-    window.alert("Objednávku se nepodařilo automaticky odeslat. Zkuste to prosím znovu nebo nás kontaktujte na info@jami-tech.cz.");
+    window.alert(error instanceof TypeError
+      ? "Objednávku se nepodařilo automaticky odeslat. Zkuste to prosím znovu nebo nás kontaktujte na info@jami-tech.cz."
+      : error.message);
     submitButton.disabled = false;
     submitButton.innerHTML = originalBtnText;
   } finally {

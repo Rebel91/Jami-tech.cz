@@ -2,6 +2,8 @@
 
 Statický web pro zakázkový 3D tisk, portfolio, e-shop a poptávky. Aktualizováno 13. 10. 2026 podle stavu zdrojových souborů. Nastavení účtů a stav veřejného nasazení tím nejsou ověřeny.
 
+Podrobný výsledek kontroly a opravy najdeš v [AUDIT.md](AUDIT.md).
+
 ## Co je potřeba dokončit před spuštěním prodeje
 
 ### Podnikatelské a právní údaje
@@ -27,14 +29,14 @@ Vzor odstoupení je připraven v [legal/odstoupeni-od-smlouvy.html](legal/odstou
 - [ ] Zahrnout do mazání e-mailové přílohy, stažené soubory i zálohy. Zdrojový kód nyní automatické mazání těchto kopií neřeší.
 - [ ] Ověřit skutečné poskytovatele hostingu a e-mailové schránky, zpracovatelské podmínky služeb Cloudflare a Resend a použité záruky předání údajů mimo EHP; podle výsledku zpřesnit zásady ochrany osobních údajů.
 
-Fotografie v prohlížeči nemají automatickou expiraci. Odebrání položky z košíku je nemaže; aplikace je odstraňuje po úspěšném přijetí objednávky. Neodeslané fotografie lze odstranit vymazáním dat webu v prohlížeči.
+Fotografie v prohlížeči nemají automatickou expiraci. Aplikace je odstraňuje při odebrání příslušné varianty z košíku a po úspěšném přijetí objednávky. Neodeslané fotografie lze odstranit vymazáním dat webu v prohlížeči.
 
 ### Nasazení a kontrola provozu
 
 - [ ] Ověřit v účtech nastavení domény a DNS, Turnstile, odesílací domény Resend a tajných klíčů Workeru. Veřejný Site Key a adresa API jsou již vyplněné v [form-config.js](form-config.js); jejich funkčnost je třeba ověřit na nasazeném webu.
 - [ ] Nasadit aktuální web a Worker společně: obsahují nové ceny Lithophane a verzi obchodních podmínek `v3.1`.
 - [ ] Nastavit nebo ověřit omezení počtu požadavků na `forms.jami-tech.cz`; Worker vlastní rate limiting zatím neobsahuje.
-- [ ] Ověřit bezpečnostní hlavičky na skutečném hostingu, zejména Content-Security-Policy a X-Content-Type-Options.
+- [ ] Ověřit bezpečnostní hlavičky na skutečném hostingu, zejména HTTP Content-Security-Policy s ochranou proti vložení do rámce a X-Content-Type-Options. CSP v HTML je již doplněna, HTTP hlavičky statického webu zatím chybějí.
 - [ ] Na veřejném webu vyzkoušet poptávku s přílohou a objednávku obou velikostí Lithophane s fotografií. Zkontrolovat ceny, dopravu, platby, interní zprávu i potvrzení zákazníkovi.
 - [ ] Ověřit objednávku a nahrávání fotografií na mobilu, chování při neúspěšném odeslání a funkčnost právních odkazů.
 
@@ -48,7 +50,7 @@ Kontrola backendu ze složky `worker/`:
 npm run check
 ```
 
-Spouští kontrolu syntaxe a testy. Při poslední kontrole prošlo všech 15 testů; tím není ověřena funkčnost produkčních účtů a doručování e-mailů.
+Spouští kontrolu syntaxe a testy. Při poslední kontrole prošlo všech 19 testů; tím není ověřena funkčnost produkčních účtů a doručování e-mailů.
 
 ## Nasazení backendu
 
@@ -98,6 +100,9 @@ Do `pictures/lithophane/01.webp` vlož skutečnou fotografii, ideálně 1200 × 
 Fotografie ukládej do `pictures/portfolio/` a přidej do `index.html`. Doporučený poměr je 1:1, rozlišení 1200 × 1200 px, formát JPG/JPEG a velikost do 1 MB. Používej názvy bez mezer, například `03.jpeg`. U každé realizace uveď konkrétní alternativní popis; do portfolia přidávej zákaznické podklady pouze s odpovídajícím svolením.
 
 ## Další rozvoj
+
+- Doplnit trvalou evidenci objednávek a ochranu před duplicitami při opakovaném odeslání po výpadku sítě.
+- Doplnit skutečné realizace do portfolia nebo odstranit prázdné zástupné karty.
 
 - Přidat více skutečných fotografií produktů a popisy realizací včetně materiálu.
 - Přidat reference zákazníků s jejich svolením.
