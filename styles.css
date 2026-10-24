@@ -422,7 +422,7 @@ body { font-size: 14px; }
 @media (max-width: 850px) { .portfolio-pause { margin-top: 20px; } }
 
 /* Základní údaje před nákupem. */
-.product-maker, .product-purchase-note, .product-tax-note { font-size: .85rem; line-height: 1.5; }
+.product-info .product-maker, .product-info .product-purchase-note, .product-info .product-tax-note { font-size: .85rem; line-height: 1.5; }
 .product-maker a { overflow-wrap: anywhere; }
-.product-purchase-note { padding: 12px; border-left: 3px solid #118b80; background: #f1f8f7; }
-.product-tax-note { color: #526269; }
+.product-info .product-purchase-note { padding: 12px; border-left: 3px solid #118b80; background: #f1f8f7; color: #213e45; }
+.product-info .product-tax-note { color: #e1ece7; }
