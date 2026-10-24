@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/index.js && node --test",
+    "check": "node ../scripts/sync-legal.mjs --check && node --check src/index.js && node --test",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "legal:sync": "node ../scripts/sync-legal.mjs",
+    "predeploy": "npm run check"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

@@ -1,6 +1,6 @@
 # Jami tech
 
-Statický web pro zakázkový 3D tisk, portfolio, e-shop a poptávky. Aktualizováno 13. 10. 2026 podle stavu zdrojových souborů. Nastavení účtů a stav veřejného nasazení tím nejsou ověřeny.
+Statický web pro zakázkový 3D tisk, portfolio, e-shop a poptávky. Aktualizováno 24. 10. 2026 podle stavu zdrojových souborů. Nastavení účtů a stav veřejného nasazení tím nejsou ověřeny.
 
 Podrobný výsledek kontroly a opravy najdeš v [AUDIT.md](AUDIT.md).
 
@@ -9,9 +9,10 @@ Podrobný výsledek kontroly a opravy najdeš v [AUDIT.md](AUDIT.md).
 ### Podnikatelské a právní údaje
 
 - [ ] Po přidělení doplnit IČO do [obchodních podmínek](legal/obchodni-podminky.html) a [ochrany osobních údajů](legal/ochrana-osobnich-udaju.html).
-- [ ] Doplnit skutečný zápis podnikatele v rejstříku a stav plátcovství DPH do obchodních podmínek; ověřit jméno, sídlo a kontakty.
+- [ ] Doplnit DIČ a skutečný zápis podnikatele v rejstříku; potvrzené plátcovství DPH a známé kontakty jsou již uvedeny.
 - [ ] Stanovit datum účinnosti obou dokumentů a odstranit označení pracovního návrhu až po doplnění údajů a ověření provozních postupů.
-- [ ] Zavést zasílání potvrzení uzavřené smlouvy se zněním platných podmínek, které si zákazník může uložit. Současný automatický e-mail potvrzuje pouze přijetí objednávky; výslovné přijetí objednávky a platební pokyny je potřeba následně poslat zákazníkovi.
+- [x] Automatické potvrzení přijetí objednávky obsahuje úplné podmínky a formulář odstoupení jako samostatné HTML přílohy; stejnou kopii dostane prodávající.
+- [ ] Po kontrole objednávky poslat výslovné přijetí s konkrétním termínem, souhrnem a stejnými přílohami. Automatický e-mail sám smlouvu neuzavírá.
 - [ ] Připravit postup pro reklamace a vrácení zboží: příjem na uvedené adrese, evidence, písemná potvrzení a sledování lhůt podle podmínek.
 
 Vzor odstoupení je připraven v [legal/odstoupeni-od-smlouvy.html](legal/odstoupeni-od-smlouvy.html) a odkazují na něj obchodní podmínky.
@@ -34,7 +35,7 @@ Fotografie v prohlížeči nemají automatickou expiraci. Aplikace je odstraňuj
 ### Nasazení a kontrola provozu
 
 - [ ] Ověřit v účtech nastavení domény a DNS, Turnstile, odesílací domény Resend a tajných klíčů Workeru. Veřejný Site Key a adresa API jsou již vyplněné v [form-config.js](form-config.js); jejich funkčnost je třeba ověřit na nasazeném webu.
-- [ ] Nasadit aktuální web a Worker společně: obsahují nové ceny Lithophane a verzi obchodních podmínek `v3.1`.
+- [ ] Nasadit aktuální web a Worker společně: obsahují nové ceny Lithophane a verzi obchodních podmínek `v3.2`.
 - [ ] Nastavit nebo ověřit omezení počtu požadavků na `forms.jami-tech.cz`; Worker vlastní rate limiting zatím neobsahuje.
 - [ ] Ověřit bezpečnostní hlavičky na skutečném hostingu, zejména HTTP Content-Security-Policy s ochranou proti vložení do rámce a X-Content-Type-Options. CSP v HTML je již doplněna, HTTP hlavičky statického webu zatím chybějí.
 - [ ] Na veřejném webu vyzkoušet poptávku s přílohou a objednávku obou velikostí Lithophane s fotografií. Zkontrolovat ceny, dopravu, platby, interní zprávu i potvrzení zákazníkovi.
@@ -50,7 +51,11 @@ Kontrola backendu ze složky `worker/`:
 npm run check
 ```
 
-Spouští kontrolu syntaxe a testy. Při poslední kontrole prošlo všech 19 testů; tím není ověřena funkčnost produkčních účtů a doručování e-mailů.
+Spouští kontrolu syntaxe a testy. Testy ověřují výpočty, formuláře i shodu příloh s právními stránkami; tím není ověřena funkčnost produkčních účtů a doručování e-mailů.
+
+Při každé změně právního textu uprav verzi také v `objednavka.js` a spusť `npm run legal:sync` ve složce `worker/`. Kontrola před nasazením odmítne neaktuální přílohy. Přiložené dokumenty jsou samostatné HTML, které lze otevřít, uložit a vytisknout bez webu.
+
+Od 1. 1. 2027 bude potřeba doplnit online funkci odstoupení pro případy, kdy právo na odstoupení vzniká; současná stránka je vzor ke stažení.
 
 ## Nasazení backendu
 

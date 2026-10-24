@@ -1,4 +1,5 @@
 import { DELIVERY, PAYMENT, PRODUCTS } from "./products.js";
+import { TERMS_VERSION, getLegalAttachments } from "./legal-documents.js";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
@@ -14,7 +15,6 @@ const JSON_HEADERS = {
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 const MAX_REQUEST_SIZE = MAX_ATTACHMENT_SIZE + 128 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["stl", "step", "stp", "obj", "3mf", "jpg", "jpeg", "png", "pdf"]);
-const TERMS_VERSION = "v3.1";
 const FIELD_LIMITS = {
   name: 120,
   email: 254,
@@ -199,7 +199,7 @@ export function buildOrder(formData, reference = generateReference("O")) {
       "Objednané položky:", ...items, "",
       `Doprava: ${delivery.label}`,
       `Platba: ${payment}`,
-      `Celková cena: ${total}`,
+      `Celková cena včetně DPH a dopravy: ${total}`,
       `Adresa: ${fields.address || "Osobní odběr"}`,
       `Poznámka: ${fields.note || "-"}`,
       `Obchodní podmínky: potvrzeno (${fields.terms_version})`, "",
@@ -207,7 +207,7 @@ export function buildOrder(formData, reference = generateReference("O")) {
       `E-mail: ${fields.email}`,
       `Telefon: ${fields.phone}`
     ].join("\n"),
-    attachments: [],
+    attachments: getLegalAttachments(),
     confirmation: {
       idempotencyKey: `${reference}-confirmation`,
       to: fields.email,
@@ -220,13 +220,20 @@ export function buildOrder(formData, reference = generateReference("O")) {
         "Objednané položky:", ...items, "",
         `Doprava: ${delivery.label}`,
         `Platba: ${payment}`,
-        `Celková cena: ${total}`,
-        `Adresa: ${fields.address || "Osobní odběr"}`, "",
-        "Toto je automatické potvrzení přijetí objednávky. Po kontrole objednávky vám zašleme další informace.", "",
+        `Celková cena včetně DPH a dopravy: ${total}`,
+        `Adresa: ${fields.address || "Osobní odběr"}`,
+        `Poznámka k objednávce: ${fields.note || "-"}`,
+        `Obchodní podmínky: ${TERMS_VERSION}`, "",
+        "Tento automatický e-mail potvrzuje doručení objednávky, nikoli uzavření smlouvy. Smlouva vznikne až naším výslovným přijetím objednávky e-mailem.",
+        "Po kontrole vám potvrdíme objednávku a termín dodání. Při platbě předem pošleme také platební údaje a splatnost.",
+        "V přílohách máte úplné znění obchodních podmínek a vzor odstoupení. Uložte si je společně s tímto e-mailem. Přílohy HTML otevřete v běžném prohlížeči a můžete je vytisknout nebo uložit do PDF.",
+        "U výrobku podle vlastní fotografie nebo individuálního zadání se neuplatní 14denní odstoupení bez důvodu; právo reklamovat vady zůstává zachováno.", "",
         "S pozdravem",
-        "Jami tech"
+        "Michal Brodský – JaMi-Tech",
+        "Krchlebská 107, 289 37 Loučeň",
+        "info@jami-tech.cz | +420 723 164 610"
       ].join("\n"),
-      attachments: []
+      attachments: getLegalAttachments()
     }
   };
 }

@@ -420,3 +420,9 @@ body { font-size: 14px; }
 .portfolio-pause { flex-shrink: 0; }
 .portfolio-pause:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 850px) { .portfolio-pause { margin-top: 20px; } }
+
+/* Základní údaje před nákupem. */
+.product-maker, .product-purchase-note, .product-tax-note { font-size: .85rem; line-height: 1.5; }
+.product-maker a { overflow-wrap: anywhere; }
+.product-purchase-note { padding: 12px; border-left: 3px solid #118b80; background: #f1f8f7; }
+.product-tax-note { color: #526269; }

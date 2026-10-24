@@ -10,7 +10,7 @@ const lithophaneVariants = Object.fromEntries(Object.entries(LITHOPHANE_PRICES).
 export const PRODUCTS = Object.freeze({
   ...lithophaneVariants,
   "3dlac-400ml": Object.freeze({
-    name: "3DLAC",
+    name: "3DLAC 400 ml",
     priceCents: 19900
   })
 });

@@ -16,7 +16,7 @@ function formatPrice(priceCents) {
 const products = [
   {
     id: "3dlac-400ml",
-    name: "3DLAC",
+    name: "3DLAC 400 ml",
     description: "3DLAC je adhezní sprej, který zajišťuje pevné přilnutí první vrstvy k tiskové podložce a po vychladnutí snadné odejmutí hotového výtisku. Vhodný pro PLA, PETG, ABS a mnoho dalších materiálů na skleněné i jiné podložce.",
     priceCents: 19900,
     image: "pictures/produkty/01.webp",
@@ -33,6 +33,9 @@ const products = [
     imageWidth: 1200,
     imageHeight: 900,
     category: "vyrobky",
+    manufacturer: "Michal Brodský – JaMi-Tech, Krchlebská 107, 289 37 Loučeň, Česko",
+    manufacturerEmail: "info@jami-tech.cz",
+    purchaseNote: "Vyrábíme podle vaší fotografie. U této osobní úpravy nelze odstoupit do 14 dnů bez důvodu; právo reklamovat vady zůstává zachováno.",
     sizes: ["120x90", "160x120"],
     // Ceny v haléřích doplňte také v worker/src/products.js. null = zatím nelze objednat.
     prices: { "120x90": 48900, "160x120": 78900 },
