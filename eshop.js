@@ -59,16 +59,14 @@ function renderProducts() {
       <label>Vaše fotografie<input type="file" data-photo accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"></label>
       <small>JPG, PNG nebo WebP, maximálně 10 MB. Fotografie se odešle až s objednávkou.</small>
       <p class="product-photo-status" role="status" aria-live="polite"></p>
-      <small>Ilustrační náhled produktu.</small>
     </div>` : "";
     const details = product.manufacturer ? `<p class="product-maker"><strong>Výrobce:</strong> ${product.manufacturer}<br><a href="mailto:${product.manufacturerEmail}">${product.manufacturerEmail}</a></p>` : "";
-    const purchaseNote = product.purchaseNote ? `<p class="product-purchase-note">${product.purchaseNote}</p>` : "";
     const initial = product.sizes ? resolveProduct(`${product.id}-${product.sizes[0]}-${product.colors[0].id}`) : product;
     const available = Number.isInteger(initial.priceCents);
     const productImage = product.image
       ? `<button class="product-image product-image-button" type="button" aria-label="Zvětšit obrázek produktu ${product.name}"><img src="${product.image}" alt="${product.name}" width="${product.imageWidth}" height="${product.imageHeight}" loading="lazy" decoding="async"><span class="product-image-fallback" hidden>Obrázek produktu není dostupný.</span></button>`
       : '<div class="product-image"><span class="product-image-fallback">Fotografie bude doplněna.</span></div>';
-    return `<article class="product-card${product.sizes ? " product-card-configurable" : ""}" id="product-${product.id}" data-product-id="${product.id}">${productImage}<div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p>${details}${options}${purchaseNote}<p class="product-tax-note">Ceny včetně DPH. Doprava se přičte v objednávce.</p><div class="product-meta"><span class="product-price">${available ? formatPrice(initial.priceCents) : "Cena bude doplněna"}</span><button class="add-to-cart" data-index="${index}" type="button" ${available ? "" : "disabled"}>PŘIDAT</button></div></div></article>`;
+    return `<article class="product-card${product.sizes ? " product-card-configurable" : ""}" id="product-${product.id}" data-product-id="${product.id}">${productImage}<div class="product-info"><p class="product-category">${categoryLabels[product.category]}</p><h3>${product.name}</h3><p>${product.description}</p>${details}${options}<div class="product-meta"><span class="product-price">${available ? formatPrice(initial.priceCents) : "Cena bude doplněna"}</span><button class="add-to-cart" data-index="${index}" type="button" ${available ? "" : "disabled"}>PŘIDAT</button></div><p class="product-tax-note">Ceny včetně DPH.</p></div></article>`;
   }).join("");
   productGrid.querySelectorAll(".product-image img").forEach((image) => {
     image.addEventListener("error", () => {

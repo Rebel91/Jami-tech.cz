@@ -24,7 +24,6 @@ const products = [
     category: "vyrobky",
     manufacturer: "Michal Brodský – JaMi-Tech, Krchlebská 107, 289 37 Loučeň, Česko",
     manufacturerEmail: "info@jami-tech.cz",
-    purchaseNote: "Vyrábíme podle vaší fotografie. U této osobní úpravy nelze odstoupit do 14 dnů bez důvodu; právo reklamovat vady zůstává zachováno.",
     sizes: ["120x90", "160x120"],
     // Ceny v haléřích doplňte také v worker/src/products.js. null = zatím nelze objednat.
     prices: { "120x90": 42000, "160x120": 56500 },
