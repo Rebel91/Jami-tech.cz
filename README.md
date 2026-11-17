@@ -86,7 +86,7 @@ Statický web se nasazuje samostatně prostřednictvím jeho hostingu. Nasazení
 
 Produktové údaje upravuj v [products.js](products.js) a ceny se stejnými ID také v [worker/src/products.js](worker/src/products.js). Ceny se ukládají v haléřích; server počítá částku z vlastního katalogu.
 
-Lithophane má velikosti **120 × 90 mm za 489 Kč** a **160 × 120 mm za 789 Kč**. Obě ceny platí pro černý rámeček, černý se třpytkami a světle modrý. Změna barvy přepíná náhled; každá kombinace velikosti a barvy má vlastní ID.
+Lithophane má velikosti **120 × 90 mm za 420 Kč** a **160 × 120 mm za 565 Kč**. Obě ceny platí pro černý rámeček, černý se třpytkami a světle modrý. Změna barvy přepíná náhled; každá kombinace velikosti a barvy má vlastní ID.
 
 Zákazník nahrává JPG, PNG nebo WebP. Limit jedné fotografie i součet fotografií v objednávce je 10 MB. Pro různé fotografie ve stejné kombinaci velikosti a barvy je zatím potřeba vytvořit samostatné objednávky.
 

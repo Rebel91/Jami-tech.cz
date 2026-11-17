@@ -1,5 +1,5 @@
 // null blokuje objednání varianty do doplnění ceny v haléřích.
-const LITHOPHANE_PRICES = { "120x90": 48900, "160x120": 78900 };
+const LITHOPHANE_PRICES = { "120x90": 42000, "160x120": 56500 };
 const LITHOPHANE_COLORS = { cerna: "Černá", "cerna-trpytky": "Černá se třpytkami", "svetle-modra": "Světle modrá" };
 const lithophaneVariants = Object.fromEntries(Object.entries(LITHOPHANE_PRICES).flatMap(([size, priceCents]) =>
   Object.entries(LITHOPHANE_COLORS).map(([color, label]) => [`lithophane-${size}-${color}`, Object.freeze({
@@ -9,9 +9,9 @@ const lithophaneVariants = Object.fromEntries(Object.entries(LITHOPHANE_PRICES).
 
 export const PRODUCTS = Object.freeze({
   ...lithophaneVariants,
-  "3dlac-400ml": Object.freeze({
-    name: "3DLAC 400 ml",
-    priceCents: 19900
+  "popelnicek-iqos": Object.freeze({
+    name: "Popelníček pro IQOS",
+    priceCents: 25000
   })
 });
 

@@ -15,17 +15,6 @@ function formatPrice(priceCents) {
 
 const products = [
   {
-    id: "3dlac-400ml",
-    name: "3DLAC 400 ml",
-    description: "3DLAC je adhezní sprej, který zajišťuje pevné přilnutí první vrstvy k tiskové podložce a po vychladnutí snadné odejmutí hotového výtisku. Vhodný pro PLA, PETG, ABS a mnoho dalších materiálů na skleněné i jiné podložce.",
-    priceCents: 19900,
-    image: "pictures/produkty/01.webp",
-    imageWidth: 810,
-    imageHeight: 800,
-    category: "prislusenstvi"
-  },
-
-  {
     id: "lithophane",
     name: "Obrázek Lithophane",
     description: "Vaše fotografie v klasickém rámečku s moderním podsvícením. Osobní dárek, který rozzáří vzpomínky. O podsvícení se stará LED pásek s napájením 5 V přes USB-C.",
@@ -38,12 +27,21 @@ const products = [
     purchaseNote: "Vyrábíme podle vaší fotografie. U této osobní úpravy nelze odstoupit do 14 dnů bez důvodu; právo reklamovat vady zůstává zachováno.",
     sizes: ["120x90", "160x120"],
     // Ceny v haléřích doplňte také v worker/src/products.js. null = zatím nelze objednat.
-    prices: { "120x90": 48900, "160x120": 78900 },
+    prices: { "120x90": 42000, "160x120": 56500 },
     colors: [
       { id: "cerna", label: "Černá", image: "pictures/produkty/lithophane/cerna.jpg" },
       { id: "cerna-trpytky", label: "Černá se třpytkami", image: "pictures/produkty/lithophane/cerna-trpytky.jpg" },
       { id: "svetle-modra", label: "Světle modrá", image: "pictures/produkty/lithophane/svetle-modra.jpg" }
     ]
+  },
+
+  {
+    id: "popelnicek-iqos",
+    name: "Popelníček pro IQOS",
+    description: "Popelníček na použité náplně do IQOS.",
+    priceCents: 25000,
+    image: null,
+    category: "prislusenstvi"
   },
 
   // Zkopíruj tento blok pro další produkt a uprav jeho údaje.

@@ -10,7 +10,7 @@ const order = (version = TERMS_VERSION) => {
   for (const [name, value] of Object.entries({
     name: "Zkušební zákazník", email: "test@example.com", phone: "123",
     delivery: "osobne", payment: "hotove", note: "Předem zavolat",
-    cart: '[{"id":"3dlac-400ml","qty":1}]', terms: "on", terms_version: version
+    cart: '[{"id":"lithophane-120x90-cerna","qty":1}]', terms: "on", terms_version: version
   })) data.set(name, value);
   return data;
 };
